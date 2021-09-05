@@ -1,16 +1,12 @@
-# Django #
-*.log
-*.pot
-*.pyc
-__pycache__
-
-## Maybe add database back in production
-# db.sqlite3
-media
+.env
 
 # Python # 
 *.py[cod] 
 *$py.class 
+*.log
+*.pot
+*.pyc
+__pycache__
 
 # Visual Studio Code # 
 **/.vscode/ 
@@ -21,7 +17,7 @@ media
 .history
 
 # Front end #
-/node_modules
-/build
-.eslintcache
-package-lock.json
+# /node_modules
+# /build
+# .eslintcache
+# package-lock.json
