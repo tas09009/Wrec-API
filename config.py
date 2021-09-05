@@ -1,4 +1,5 @@
 import os
+import re
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
