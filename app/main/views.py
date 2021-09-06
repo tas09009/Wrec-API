@@ -2,11 +2,6 @@ from flask import render_template, jsonify, request, url_for, redirect
 from . import main
 from .. import db
 from app.models import Book, User, TenCategories, HundredCategories, ThousandCategories
-from ..api.books import deweyDecimalLink, deweyToCategoryTen, deweyToCategoryHundred, deweyToCategoryThousand, ten_and_hundred
-
-
-# from app.models_populate import create_ten_classes, populate_ten_classes, populate_hundred_classes
-
 
 
 
@@ -17,19 +12,17 @@ def index():
 # @main.route('/<username>/books/')
 # See missing dewey numbers, not to use during production
 @main.route('/circlepacking')
-def circlePacking():
-    # ten_and_hundred()
+def circle_packing_view():
 
     user = User.query.filter_by(username='john').first()
-    # books = user.books.all()
 
     ten_cat = TenCategories.query.all()
-    ten_cat_list = [ten_category.classification for ten_category in ten_cat]
-
     hun_cat = HundredCategories.query.all()
-    hun_cat_list = [hun_category.classification for hun_category in hun_cat]
-
     thou_cat = ThousandCategories.query.all()
+
+
+    ten_cat_list = [ten_category.classification for ten_category in ten_cat]
+    hun_cat_list = [hun_category.classification for hun_category in hun_cat]
     thou_cat_list = [thou_category.classification for thou_category in thou_cat]
 
     tens_list = []
@@ -63,7 +56,7 @@ def circlePacking():
 
 
 @main.route('/books_uploaded')
-def viewBooks():
+def view_books_by_user():
 
     user = User.query.filter_by(username='john').first()
     books = user.books.all()
@@ -72,151 +65,36 @@ def viewBooks():
     return jsonify(books_list)
 
 @main.route('/ten_categories')
-def viewTenCategories():
+def view_books_ten_categories():
+    ten_cat = TenCategories.query.all()
 
     user = User.query.filter_by(username='john').first()
     books = user.books.all()
 
-    books_within_categories = [category.to_json() for category in TenCategories.query.all()]
+    books_within_categories = [category.to_json() for category in ten_cat]
     return jsonify(books_within_categories)
 
 
 @main.route('/hundred_categories')
-def viewHundredCategories():
+def view_books_hundred_categories():
+    hun_cat = HundredCategories.query.all()
 
     user = User.query.filter_by(username='john').first()
     books = user.books.all()
 
-    books_within_categories = [category.to_json() for category in HundredCategories.query.all()]
+    books_within_categories = [category.to_json() for category in hun_cat]
     return jsonify(books_within_categories)
 
 
 @main.route('/thousand_categories')
-def viewThousandCategories():
+def view_books_thousand_categories():
+    thou_cat = ThousandCategories.query.all()
 
     user = User.query.filter_by(username='john').first()
     books = user.books.all()
 
-    books_within_categories = [category.to_json() for category in ThousandCategories.query.all()]
+    books_within_categories = [category.to_json() for category in thou_cat]
     return jsonify(books_within_categories)
 
-
-
-
-# -----------------------------------------------------------------------------------------------
-# One time upload of categories, Admin only
-
-@main.route('/category/ten/upload', methods=['GET', 'POST'])
-def csv_import_ten_categories():
-    if request.method == 'POST':
-
-        def category_init_func(row):
-            category_instance = TenCategories()
-            category_instance.call_number = row['call_number']
-            category_instance.classification = row['classification']
-
-            # category_instance = TenCategories_DDC(row['call_number'], row['classification'])
-            return category_instance
-
-                     
-        mapdict = {
-            'Call Number' : 'call_number',
-            'Classification' : 'classification',
-            }
-
-        request.isave_to_database(
-            field_name="file",
-            session=db.session,
-            table=TenCategories,
-            initializer=category_init_func,
-            mapdict=mapdict
-        )      
-          
-        return redirect(url_for(".viewTenCategories", username='john'), code=302)
-
-    return """
-    <!doctype html>
-    <title>Upload an excel file</title>
-    <h1>Excel file upload (xls, xlsx, ods please)</h1>
-    <form action="" method=post enctype=multipart/form-data><p>
-    <input type=file name=file><input type=submit value=Upload>
-    </form>
-    """
-
-
-@main.route('/category/hundred/upload', methods=['GET', 'POST'])
-def csv_import_hundred_categories():
-    if request.method == 'POST':
-
-        def category_init_func(row):
-            category_instance = HundredCategories()
-            category_instance.call_number = row['call_number']
-            category_instance.classification = row['classification']
-
-            # category_instance = HundredCategories_DDC(row['call_number'], row['classification'])
-            return category_instance
-
-                     
-        mapdict = {
-            'Call Number' : 'call_number',
-            'Classification' : 'classification',
-            }
-
-        request.isave_to_database(
-            field_name="file",
-            session=db.session,
-            table=HundredCategories,
-            initializer=category_init_func,
-            mapdict=mapdict
-        )      
-          
-        return redirect(url_for(".viewHundredCategories", username='john'), code=302)
-
-    return """
-    <!doctype html>
-    <title>Upload an excel file</title>
-    <h1>Excel file upload (xls, xlsx, ods please)</h1>
-    <form action="" method=post enctype=multipart/form-data><p>
-    <input type=file name=file><input type=submit value=Upload>
-    </form>
-    """
-
-
-@main.route('/category/thousand/upload', methods=['GET', 'POST'])
-def csv_import_thousand_categories():
-    if request.method == 'POST':
-
-        def category_init_func(row):
-            category_instance = ThousandCategories()
-            category_instance.call_number = row['call_number']
-            category_instance.classification = row['classification']
-
-            # category_instance = ThousandCategories_DDC(row['call_number'], row['classification'])
-            return category_instance
-
-                     
-        mapdict = {
-            'Call Number' : 'call_number',
-            'Classification' : 'classification',
-            }
-
-        request.isave_to_database(
-            field_name="file",
-            session=db.session,
-            table=ThousandCategories,
-            initializer=category_init_func,
-            mapdict=mapdict
-        )      
-          
-        return redirect(url_for(".viewThousandCategories", username='john'), code=302)
-
-    return """
-    <!doctype html>
-    <title>Upload an excel file</title>
-    <h1>Excel file upload (xls, xlsx, ods please)</h1>
-    <form action="" method=post enctype=multipart/form-data><p>
-    <input type=file name=file><input type=submit value=Upload>
-    </form>
-    """
 
 

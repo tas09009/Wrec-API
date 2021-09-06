@@ -1,6 +1,7 @@
 from urllib.request import urlopen
 from urllib.parse import urlencode
 import re
+import requests
 
 from flask import request, redirect, url_for
 import flask_excel as excel
@@ -10,7 +11,6 @@ from app.models import Book, User, TenCategories, HundredCategories, ThousandCat
 from . import api
 from .. import db
 from .decorators import permission_required
-
 
 
 
@@ -26,15 +26,13 @@ def csv_import():
         def book_init_func(row):
             book_instance = Book(row['title'])
             book_instance.author = row['author']
-
-
-
             book_instance.isbn = row['isbn']
             book_instance.isbn13 = row['isbn13']
                
             '''Cleanup ISBN numbers'''        
-            # book_instance.isbn = cleanISBN(book_instance.isbn)
-            # book_instance.isbn13 = cleanISBN(book_instance.isbn13)
+            # book_instance.isbn = clean_isbn(book_instance.isbn)
+            # book_instance.isbn13 = clean_isbn(book_instance.isbn13)
+
             '''Add rows to User.books'''        
             user = User.query.filter_by(username='john').first()
             user.books.append(book_instance)
@@ -65,7 +63,7 @@ def csv_import():
         dewey_and_thousand()  
 
 
-        return redirect(url_for("main.viewBooks", username='john'), code=302) #redirect elsewhere
+        return redirect(url_for("main.view_books_by_user", username='john'), code=302) 
 
     return """
     <!doctype html>
@@ -82,26 +80,26 @@ def dewey_and_thousand():
     user = User.query.filter_by(username='john').first()
     books = user.books.all()
     for book_instance in books:      
-        book_instance.classify_ddc = deweyDecimalLink(book_instance.isbn) # 800
+        book_instance.classify_ddc = request_book_data(book_instance.isbn) 
 
         db.session.add(book_instance)
         db.session.commit()
 
-        book_instance.classify_ten_id = deweyToCategoryTen(book_instance.classify_ddc) # Literature
-        book_instance.classify_hundred_id = deweyToCategoryHundred(book_instance.classify_ddc) # Literature
-        book_instance.classify_thousand_id = deweyToCategoryThousand(book_instance.classify_ddc) # Literature          
+        book_instance.classify_ten_id = dewey_to_category_ten(book_instance.classify_ddc) 
+        book_instance.classify_hundred_id = dewey_to_category_hundred(book_instance.classify_ddc)
+        book_instance.classify_thousand_id = dewey_to_category_thousand(book_instance.classify_ddc)          
         
-        if book_instance.classify_ten_id is not None:
+        if book_instance.classify_ten_id:
             category_obj = TenCategories.query.filter_by(id=book_instance.classify_ten_id).first()
             category_obj.books.append(book_instance)
             db.session.add(category_obj)
             db.session.commit()
-        if book_instance.classify_hundred_id is not None:
+        if book_instance.classify_hundred_id:
             category_obj = HundredCategories.query.filter_by(id=book_instance.classify_hundred_id).first()
             category_obj.books.append(book_instance)
             db.session.add(category_obj)
             db.session.commit()
-        if book_instance.classify_thousand_id is not None:
+        if book_instance.classify_thousand_id:
             category_obj = ThousandCategories.query.filter_by(id=book_instance.classify_thousand_id).first()
             category_obj.books.append(book_instance)
             db.session.add(category_obj)
@@ -113,12 +111,11 @@ def dewey_and_thousand():
 
 
 def ten_and_hundred():
-    ten_cat = TenCategories.query.all()
-    hun_cat = HundredCategories.query.all()
-    thou_cat = ThousandCategories.query.all()
-
 
     def populate_ten_classes():
+        ten_cat = TenCategories.query.all()
+        hun_cat = HundredCategories.query.all()
+
         start = 0
         stop = 10
         for i in ten_cat:
@@ -131,8 +128,10 @@ def ten_and_hundred():
         return
 
 
-
     def populate_hundred_classes():
+        hun_cat = HundredCategories.query.all()
+        thou_cat = ThousandCategories.query.all()
+
         start = 0
         stop = 10
         for i in hun_cat:
@@ -150,147 +149,202 @@ def ten_and_hundred():
 
 # isbn to Dewey decimal
 @api.route('/dewey/', methods=["GET"])
-def deweyDecimalLink(isbn):
+def request_book_data(isbn):
+    '''Classify API from ISBN -> JSON of book'''
 
-    # isbn = '1999683382'
+    if isbn:
+      
+        base = 'http://classify.oclc.org/classify2/Classify?'
+        summaryBase = '&summary=true'
+        parm_type = 'isbn'
+        parm_value = isbn
+        search_url = base + urlencode({parm_type:parm_value.encode('utf-8')}) + summaryBase
+        xml_content = urlopen(search_url).read() #TODO use requests library instead. Also use response codes
+        xmlDict = xmltodict.parse(xml_content)          
+        
+        isbnDirect = isbn_to_dewey(xmlDict)
+        return isbnDirect
 
-    if isbn is None:
-        return 'No ISBN'
-    else:
+    elif isbn is None:
+        return 'No ISBN provided'
 
+
+def isbn_to_dewey(xmlDict):
+
+    if xmlDict.get("classify").get('response').get('@code') == "0":
         try:
-            '''Classify API from ISBN -> JSON of book'''
+            dewey_number = xmlDict.get("classify").get('recommendations').get('ddc').get('mostPopular').get('@sfa')
+            return dewey_number
+        except AttributeError:
+            return "Returned book response, but has no dewey number"
+    elif xmlDict.get("classify").get('response').get('@code') == "4":
+        try:
+            owi_number = xmlDict.get("classify").get('works').get('work')[0].get('@owi')
+
             base = 'http://classify.oclc.org/classify2/Classify?'
-            parmType = 'isbn'
-            parmValue = isbn
-            searchURL = base + urlencode({parmType:parmValue.encode('utf-8')})
-                    
-            
-            xmlContent = urlopen(searchURL)
-            xmlFile = xmlContent.read()
-            xmlDict = xmltodict.parse(xmlFile)         
-            jsonDumps = json.dumps(xmlDict) # redundant
-            jsonContentISBN = json.loads(jsonDumps)
+            parm_type = 'owi'
+            parm_value = owi_number
+            search_url = base + urlencode({parm_type:parm_value.encode('utf-8')})
+            xml_content = urlopen(search_url).read() 
+            xmlDict = xmltodict.parse(xml_content)  
 
-
+            dewey_number = xmlDict.get("classify").get('recommendations').get('ddc').get('mostPopular').get('@sfa')
+            return dewey_number
         except AttributeError:
-            jsonContentOWI = owiDewey(jsonContentISBN)
-            isbnOWI = isbnDewey(jsonContentOWI)
-            return isbnOWI
-        
-        try:
-            isbnDirect = isbnDewey(jsonContentISBN)
-            return isbnDirect
-
-        except AttributeError:
-            return 'int object has no attribute encode'
-
-
-# '''Helper functions for above'''
-# ---------------------------------------------------------
-
-def isbnDewey(jsonContentISBN):
-
-    if type(jsonContentISBN.get("classify").get('editions').get('edition')) == list:
-    
-
-        try:
-            base = jsonContentISBN.get("classify").get('editions').get('edition')[0]
-            deweyNumber0 = base.get('classifications').get('class')[0].get('@sfa')
-            deweyNumber1 = base.get('classifications').get('class')[1].get('@sfa')
-
-            regexNumber0 = re.findall("[a-zA-Z]", deweyNumber0)
-            regexNumber1 = re.findall("[a-zA-Z]", deweyNumber1)
-
-            if len(regexNumber0) > 0:
-                deweyNumber = deweyNumber1
-            else:
-                deweyNumber = deweyNumber0
-
-        except KeyError:
-            return 'KeyError'
-            try:
-                base = jsonContentISBN.get("classify").get('editions').get('edition')[0]
-                deweyNumber = base.get('classifications').get('class').get('@sfa')
-            except KeyError:
-                base =  jsonContentISBN.get("classify").get('editions').get('edition')
-                deweyNumber0 = base.get('classifications').get('class')[0].get('@sfa')
-                deweyNumber1 = base.get('classifications').get('class')[1].get('@sfa')
-
-                regexNumber0 = re.findall("[a-zA-Z]", deweyNumber0)
-                regexNumber1 = re.findall("[a-zA-Z]", deweyNumber1)
-
-                if len(regexNumber0) > 0:
-                    deweyNumber = deweyNumber1
-                else:
-                    deweyNumber = deweyNumber0
-        
-
-        except AttributeError:
-            deweyNumber = 'missing'
-
+            return "multiple works found, use OWI"
     else:
-        return "Key error"
-
-
-    return deweyNumber
-
-def owiDewey(jsonContentISBN):
-
-    owi = jsonContentISBN.get("classify").get("works").get('work')[0].get('@owi')
-
-    base = 'http://classify.oclc.org/classify2/Classify?'
-    parmType1 = 'owi'
-    parmValue1 = owi
-    searchURL = base + urlencode({parmType1:parmValue1.encode('utf-8')})
-
-
-    '''redirect to OCLC's site to extract XML file of book'''
-    xmlContent = urlopen(searchURL)
-    xmlFile = xmlContent.read()
-    xmlDict = xmltodict.parse(xmlFile)
-    jsonDumps = json.dumps(xmlDict)
-    jsonContentOWI = json.loads(jsonDumps)
-
-    return jsonContentOWI
+        return 'Key Error'
 
 
 
-def deweyToCategoryTen(deweyNumber):
-    '''Find the corresponding Category title'''
-    # deweyFloat = float(deweyNumber)
-    firstNum_ten = deweyNumber[0]
-    for category in TenCategories.query.all():
+
+'''Find the corresponding Category titles'''
+def dewey_to_category_ten(dewey_number):
+    ten_cat = TenCategories.query.all()
+    
+    firstNum_ten = dewey_number[0]
+    for category in ten_cat:
         if firstNum_ten == category.call_number[0]:
             return category.id
 
-def deweyToCategoryHundred(deweyNumber):
-    firstNum_hundred = deweyNumber[0:2]
-    for category in HundredCategories.query.all():
+def dewey_to_category_hundred(dewey_number):
+    hun_cat = HundredCategories.query.all()
+
+    firstNum_hundred = dewey_number[0:2]
+    for category in hun_cat:
         if firstNum_hundred == category.call_number[0:2]:
             return category.id
 
-def deweyToCategoryThousand(deweyNumber):
-    firstNum_thousand = deweyNumber[0:3]
-    for category in ThousandCategories.query.all():
+def dewey_to_category_thousand(dewey_number):
+    thou_cat = ThousandCategories.query.all()
+
+    firstNum_thousand = dewey_number[0:3]
+    for category in thou_cat:
         if firstNum_thousand == category.call_number[0:3]:
             return category.id
-        # return "no dewey number provided"
+
+
+def clean_isbn(isbn):
+    filter_isbn = re.findall("[a-zA-Z0-9]", isbn)
+    join_isbn = ('').join(filter_isbn)
+    return join_isbn
 
 
 
 
+# -----------------------------------------------------------------------------------------------
+# One time upload of categories, Admin only
 
-def cleanISBN(isbn):
-    # print(isbn)
-    filterISBN = re.findall("[a-zA-Z0-9]", isbn)
-    joinISBN = ('').join(filterISBN)
+@api.route('/category/ten/upload', methods=['GET', 'POST'])
+def csv_import_ten_categories():
+    if request.method == 'POST':
 
-    return joinISBN
+        def category_init_func(row):
+            category_instance = TenCategories()
+            category_instance.call_number = row['call_number']
+            category_instance.classification = row['classification']
+
+            # category_instance = TenCategories_DDC(row['call_number'], row['classification'])
+            return category_instance
+
+                     
+        mapdict = {
+            'Call Number' : 'call_number',
+            'Classification' : 'classification',
+            }
+
+        request.isave_to_database(
+            field_name="file",
+            session=db.session,
+            table=TenCategories,
+            initializer=category_init_func,
+            mapdict=mapdict
+        )      
+          
+        return redirect(url_for("main.view_books_ten_categories", username='john'), code=302)
+
+    return """
+    <!doctype html>
+    <title>Upload an excel file</title>
+    <h1>Excel file upload (xls, xlsx, ods please)</h1>
+    <form action="" method=post enctype=multipart/form-data><p>
+    <input type=file name=file><input type=submit value=Upload>
+    </form>
+    """
 
 
+@api.route('/category/hundred/upload', methods=['GET', 'POST'])
+def csv_import_hundred_categories():
+    if request.method == 'POST':
+
+        def category_init_func(row):
+            category_instance = HundredCategories()
+            category_instance.call_number = row['call_number']
+            category_instance.classification = row['classification']
+
+            # category_instance = HundredCategories_DDC(row['call_number'], row['classification'])
+            return category_instance
+
+                     
+        mapdict = {
+            'Call Number' : 'call_number',
+            'Classification' : 'classification',
+            }
+
+        request.isave_to_database(
+            field_name="file",
+            session=db.session,
+            table=HundredCategories,
+            initializer=category_init_func,
+            mapdict=mapdict
+        )      
+          
+        return redirect(url_for("main.view_books_hundred_categories", username='john'), code=302)
+
+    return """
+    <!doctype html>
+    <title>Upload an excel file</title>
+    <h1>Excel file upload (xls, xlsx, ods please)</h1>
+    <form action="" method=post enctype=multipart/form-data><p>
+    <input type=file name=file><input type=submit value=Upload>
+    </form>
+    """
 
 
-def addingFakeDewey(isbn):
+@api.route('/category/thousand/upload', methods=['GET', 'POST'])
+def csv_import_thousand_categories():
+    if request.method == 'POST':
 
-    return 'testing fake dewey'
+        def category_init_func(row):
+            category_instance = ThousandCategories()
+            category_instance.call_number = row['call_number']
+            category_instance.classification = row['classification']
+
+            # category_instance = ThousandCategories_DDC(row['call_number'], row['classification'])
+            return category_instance
+
+                     
+        mapdict = {
+            'Call Number' : 'call_number',
+            'Classification' : 'classification',
+            }
+
+        request.isave_to_database(
+            field_name="file",
+            session=db.session,
+            table=ThousandCategories,
+            initializer=category_init_func,
+            mapdict=mapdict
+        )      
+          
+        return redirect(url_for("main.view_books_thousand_categories", username='john'), code=302)
+
+    return """
+    <!doctype html>
+    <title>Upload an excel file</title>
+    <h1>Excel file upload (xls, xlsx, ods please)</h1>
+    <form action="" method=post enctype=multipart/form-data><p>
+    <input type=file name=file><input type=submit value=Upload>
+    </form>
+    """
+

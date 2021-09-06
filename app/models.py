@@ -69,22 +69,22 @@ class Book(db.Model):
     classify_thousand_id = db.Column(db.Integer, db.ForeignKey('thousand_categories_ddc.id'))
 
     ''' Goodreads info from csv import '''
-    book_id = db.Column(db.String)
+    # book_id = db.Column(db.String)
     title = db.Column(db.String)
     author = db.Column(db.String)
-    additional_authors = db.Column(db.String)
+    # additional_authors = db.Column(db.String)
     isbn = db.Column(db.String)
     isbn13 = db.Column(db.String)
-    my_rating = db.Column(db.Integer)
-    avg_rating = db.Column(db.Float)
-    publisher = db.Column(db.String)
-    binding = db.Column(db.String)
-    pages = db.Column(db.Integer)
-    year_publish = db.Column(db.String) # Integer?
-    year_publish_original = db.Column(db.String) # Integer?
-    date_read = db.Column(db.String) # Datetime.date?
-    date_added = db.Column(db.String) # Datetime.date?
-    bookshelves = db.Column(db.String)
+    # my_rating = db.Column(db.Integer)
+    # avg_rating = db.Column(db.Float)
+    # publisher = db.Column(db.String)
+    # binding = db.Column(db.String)
+    # pages = db.Column(db.Integer)
+    # year_publish = db.Column(db.String) # Integer?
+    # year_publish_original = db.Column(db.String) # Integer?
+    # date_read = db.Column(db.String) # Datetime.date?
+    # date_added = db.Column(db.String) # Datetime.date?
+    # bookshelves = db.Column(db.String)
 
 
     def __init__(self, title):
