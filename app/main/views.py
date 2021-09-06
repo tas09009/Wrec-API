@@ -1,4 +1,5 @@
 from flask import render_template, jsonify, request, url_for, redirect
+from flask_login import login_required, current_user
 from . import main
 from .. import db
 from app.models import Book, User, TenCategories, HundredCategories, ThousandCategories
@@ -11,16 +12,18 @@ def index():
 
 # @main.route('/<username>/books/')
 # See missing dewey numbers, not to use during production
-@main.route('/circlepacking')
+@main.route('/<username>/circlepacking')
+@login_required
 def circle_packing_view():
+    user = User.query.filter_by(id=current_user.id).first()
 
-    user = User.query.filter_by(username='john').first()
 
+    '''Each of their respective objects'''
     ten_cat = TenCategories.query.all()
     hun_cat = HundredCategories.query.all()
     thou_cat = ThousandCategories.query.all()
 
-
+    '''Each of their respective classifications'''
     ten_cat_list = [ten_category.classification for ten_category in ten_cat]
     hun_cat_list = [hun_category.classification for hun_category in hun_cat]
     thou_cat_list = [thou_category.classification for thou_category in thou_cat]
@@ -55,38 +58,43 @@ def circle_packing_view():
     return jsonify(books_dict)
 
 
-@main.route('/books_uploaded')
-def view_books_by_user():
-
-    user = User.query.filter_by(username='john').first()
-    books = user.books.all()
+@main.route('/books_uploaded/<username>')
+@login_required
+def view_books_by_user(username):
+    books = User.query.filter_by(username=username).first().books.all()
 
     books_list = [book.serialize() for book in books]
     return jsonify(books_list)
 
-@main.route('/ten_categories')
-def view_books_ten_categories():
+@main.route('/ten_categories/<username>')
+@login_required
+def view_books_ten_categories(username):
+    books = User.query.filter_by(username=username).first().books.all()
     ten_cat = TenCategories.query.all()
-
-    user = User.query.filter_by(username='john').first()
-    books = user.books.all()
 
     books_within_categories = [category.to_json() for category in ten_cat]
     return jsonify(books_within_categories)
 
 
-@main.route('/hundred_categories')
-def view_books_hundred_categories():
-    hun_cat = HundredCategories.query.all()
+    # def to_json(self):
+    #     books = {
+    #         'call_number' : self.call_number,
+    #         'classification' : self.classification,
+    #         'books' : [book.title for book in self.books]
+    #     }
+    #     return books
 
-    user = User.query.filter_by(username='john').first()
-    books = user.books.all()
+@main.route('/hundred_categories/<username>')
+@login_required
+def view_books_hundred_categories(username):
+    hun_cat = HundredCategories.query.all()
 
     books_within_categories = [category.to_json() for category in hun_cat]
     return jsonify(books_within_categories)
 
 
 @main.route('/thousand_categories')
+@login_required
 def view_books_thousand_categories():
     thou_cat = ThousandCategories.query.all()
 

@@ -2,6 +2,7 @@ from functools import wraps
 from flask import g
 from .errors import forbidden
 
+# Only used for admin purposes
 def permission_required(permission):
     def decorator(f):
         @wraps(f)

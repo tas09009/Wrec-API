@@ -53,6 +53,10 @@ class User(UserMixin, db.Model):
             return None
         return User.query.get(data['id'])
 
+    def get_books_list(self):
+        book_list = [i for i in self.books]
+
+
     def __repr__(self):
         return '<User %r>' % self.username
 
@@ -119,7 +123,7 @@ class TenCategories(db.Model):
 
 
 
-
+    # books should be [] not prepopulated. Or move this method to "User" model
     def to_json(self):
         books = {
             'call_number' : self.call_number,
