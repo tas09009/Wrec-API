@@ -123,12 +123,12 @@ class TenCategories(db.Model):
 
 
 
-    # books should be [] not prepopulated. Or move this method to "User" model
     def to_json(self):
         books = {
             'call_number' : self.call_number,
             'classification' : self.classification,
-            'books' : [book.title for book in self.books]
+            'books' : []
+            # 'books' : [book.title for book in self.books]
         }
         return books
 

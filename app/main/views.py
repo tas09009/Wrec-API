@@ -10,13 +10,12 @@ from app.models import Book, User, TenCategories, HundredCategories, ThousandCat
 def index():
     return render_template('index.html')
 
-# @main.route('/<username>/books/')
-# See missing dewey numbers, not to use during production
-@main.route('/<username>/circlepacking')
+@main.route('/circlepacking') #TODO user isn't used in function
 @login_required
 def circle_packing_view():
-    user = User.query.filter_by(id=current_user.id).first()
 
+    # user = User.query.filter_by(id=current_user.id).first()
+    user_books = User.query.filter_by(id=current_user.id).first().books.all()
 
     '''Each of their respective objects'''
     ten_cat = TenCategories.query.all()
@@ -28,9 +27,9 @@ def circle_packing_view():
     hun_cat_list = [hun_category.classification for hun_category in hun_cat]
     thou_cat_list = [thou_category.classification for thou_category in thou_cat]
 
+    
+    
     tens_list = []
-    
-    
     books_dict = {"name" : "books", "children" : tens_list}
     for i in ten_cat:
         ten_placeholder = {} # dict of tens category
@@ -51,6 +50,14 @@ def circle_packing_view():
                 tho_title = k.call_number + ' | ' + k.classification
                 tho_placeholder["name"] = tho_title
                 tho_placeholder["children"] = [i.title for i in k.books]
+
+                # Add user's books only
+
+                # tho_placeholder["children"] = []
+                # for book in user_books:
+                #     if book.classify_thousand_id == 
+
+
                 tho_list.append(tho_placeholder)
 
         tens_list.append(ten_placeholder)
@@ -58,51 +65,65 @@ def circle_packing_view():
     return jsonify(books_dict)
 
 
-@main.route('/books_uploaded/<username>')
+@main.route('/bookshelf')
 @login_required
-def view_books_by_user(username):
-    books = User.query.filter_by(username=username).first().books.all()
+def view_books_by_user():
 
-    books_list = [book.serialize() for book in books]
+    user_books = User.query.filter_by(id=current_user.id).first().books.all()
+
+    books_list = [book.serialize() for book in user_books]
     return jsonify(books_list)
 
-@main.route('/ten_categories/<username>')
+@main.route('/ten_categories')
 @login_required
-def view_books_ten_categories(username):
-    books = User.query.filter_by(username=username).first().books.all()
+def view_books_ten_categories():
+    user_books = User.query.filter_by(id=current_user.id).first().books.all()
     ten_cat = TenCategories.query.all()
 
-    books_within_categories = [category.to_json() for category in ten_cat]
-    return jsonify(books_within_categories)
+    users_books_within_ten = []
+    for category in ten_cat:
+        classification = category.to_json()
+        for book in user_books:
+            if book.classify_ten_id == category.id:
+                classification['books'].append(book.title)
+
+        users_books_within_ten.append(classification)
+    return jsonify(users_books_within_ten)
 
 
-    # def to_json(self):
-    #     books = {
-    #         'call_number' : self.call_number,
-    #         'classification' : self.classification,
-    #         'books' : [book.title for book in self.books]
-    #     }
-    #     return books
-
-@main.route('/hundred_categories/<username>')
+@main.route('/hundred_categories')
 @login_required
-def view_books_hundred_categories(username):
+def view_books_hundred_categories():
+
+    user_books = User.query.filter_by(id=current_user.id).first().books.all()
     hun_cat = HundredCategories.query.all()
 
-    books_within_categories = [category.to_json() for category in hun_cat]
-    return jsonify(books_within_categories)
+    users_books_within_ten = []
+    for category in hun_cat:
+        classification = category.to_json()
+        for book in user_books:
+            if book.classify_ten_id == category.id:
+                classification['books'].append(book.title)
+
+        users_books_within_ten.append(classification)
+    return jsonify(users_books_within_ten)
+
 
 
 @main.route('/thousand_categories')
 @login_required
 def view_books_thousand_categories():
+    user_books = User.query.filter_by(id=current_user.id).first().books.all()
     thou_cat = ThousandCategories.query.all()
 
-    user = User.query.filter_by(username='john').first()
-    books = user.books.all()
+    users_books_within_ten = []
+    for category in thou_cat:
+        classification = category.to_json()
+        for book in user_books:
+            if book.classify_ten_id == category.id:
+                classification['books'].append(book.title)
 
-    books_within_categories = [category.to_json() for category in thou_cat]
-    return jsonify(books_within_categories)
-
+        users_books_within_ten.append(classification)
+    return jsonify(users_books_within_ten)
 
 
