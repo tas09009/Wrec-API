@@ -3,6 +3,7 @@ from urllib.parse import urlencode
 import re
 
 from flask import request, redirect, url_for
+from flask_login import login_required, current_user
 import flask_excel as excel  # not being used?
 import xmltodict
 
@@ -17,12 +18,12 @@ from . import api
 from .. import db
 
 
-# Add ['DELETE'] method. Doesn't remove book info, only user association
-
-
 # http://127.0.0.1:5000/api/v1/books/upload
 @api.route("/books/upload", methods=["GET", "POST"])
+@login_required
 def csv_import():
+    """Upload a goodreads csv file > populate database."""
+
     if request.method == "POST":
 
         def book_init_func(row):
@@ -31,12 +32,9 @@ def csv_import():
             book_instance.isbn = row["isbn"]
             book_instance.isbn13 = row["isbn13"]
 
-            """Cleanup ISBN numbers"""
-            # book_instance.isbn = clean_isbn(book_instance.isbn)
-            # book_instance.isbn13 = clean_isbn(book_instance.isbn13)
 
             """Add rows to User.books"""
-            user = User.query.filter_by(username="john").first()
+            user = User.query.filter_by(id=current_user.id).first()
             user.books.append(book_instance)
 
             return book_instance
@@ -57,14 +55,12 @@ def csv_import():
         )
 
         """Create Ten and Hundred nested relationship"""
-        ten_and_hundred()
+        populate_nested_structure()
 
-        """Dewey Number + Category"""
-        dewey_and_thousand()
+        """Dewey Number + Classification"""
+        classify_book()
 
-        return redirect(
-            url_for("main.view_books_by_user", username="john"), code=302
-        )
+        return redirect(url_for("main.view_books_by_user"))
 
     return """
     <!doctype html>
@@ -76,43 +72,47 @@ def csv_import():
     """
 
 
-def dewey_and_thousand():
-    user = User.query.filter_by(username="john").first()
-    books = user.books.all()
-    for book_instance in books:
-        book_instance.classify_ddc = request_book_data(book_instance.isbn)
+def classify_book():
+    """
+    Classify each of the users's books by:
+
+    1. Finding the dewey decimal value. This uses several helper functions
+    2. Populating into the three classification categories which are 
+    represented represented by the models:
+        - TenCategories
+        - HundredCategories
+        - ThousandCategories
+    """
+
+    user_books = User.query.filter_by(username=current_user.username).first().books.all()
+    for book_instance in user_books:
+        book_instance.classify_ddc = request_book_data(book_instance)
 
         db.session.add(book_instance)
         db.session.commit()
 
         book_instance.classify_ten_id = dewey_to_category_ten(
-            book_instance.classify_ddc
-        )
+            book_instance.classify_ddc)
         book_instance.classify_hundred_id = dewey_to_category_hundred(
-            book_instance.classify_ddc
-        )
+            book_instance.classify_ddc)
         book_instance.classify_thousand_id = dewey_to_category_thousand(
-            book_instance.classify_ddc
-        )
+            book_instance.classify_ddc)
 
         if book_instance.classify_ten_id:
             category_obj = TenCategories.query.filter_by(
-                id=book_instance.classify_ten_id
-            ).first()
+                id=book_instance.classify_ten_id).first()
             category_obj.books.append(book_instance)
             db.session.add(category_obj)
             db.session.commit()
         if book_instance.classify_hundred_id:
             category_obj = HundredCategories.query.filter_by(
-                id=book_instance.classify_hundred_id
-            ).first()
+                id=book_instance.classify_hundred_id).first()
             category_obj.books.append(book_instance)
             db.session.add(category_obj)
             db.session.commit()
         if book_instance.classify_thousand_id:
             category_obj = ThousandCategories.query.filter_by(
-                id=book_instance.classify_thousand_id
-            ).first()
+                id=book_instance.classify_thousand_id).first()
             category_obj.books.append(book_instance)
             db.session.add(category_obj)
             db.session.commit()
@@ -122,7 +122,11 @@ def dewey_and_thousand():
     return
 
 
-def ten_and_hundred():
+def populate_nested_structure():
+    """
+    nest 100 'HundredCategories' within 10 'TenCategories'
+    nest 100 'ThousandCategories' within 10 'HundredCategories'
+    """
     def populate_ten_classes():
         ten_cat = TenCategories.query.all()
         hun_cat = HundredCategories.query.all()
@@ -159,35 +163,62 @@ def ten_and_hundred():
 
 # isbn to Dewey decimal
 @api.route("/dewey/", methods=["GET"])
-def request_book_data(isbn):
-    """Classify API from ISBN -> JSON of book"""
+def request_book_data(book_instance):
+    """
+    Use Classify API to find the dewey decimal number using:
+    1. ISBN: uses isbn_to_dewey()
+    OR
+    2. title & author
+    
+    returns XML data for each book. Parse until dewey decimal
+    number is found
+    """
 
-    if isbn:
+    base = "http://classify.oclc.org/classify2/Classify?"
+    summaryBase = "&summary=true"
 
-        base = "http://classify.oclc.org/classify2/Classify?"
-        summaryBase = "&summary=true"
+    if book_instance.isbn:
         parm_type = "isbn"
-        parm_value = isbn
+        parm_value = book_instance.isbn
         search_url = (
-            base
-            + urlencode({parm_type: parm_value.encode("utf-8")})
+            base 
+            + urlencode({parm_type: parm_value.encode("utf-8")}) 
             + summaryBase
         )
-        xml_content = urlopen(
-            search_url
-        ).read()  # TODO use requests library instead. Also use response codes
-        xmlDict = xmltodict.parse(xml_content)
+        # xml_content = urlopen(
+        #     search_url
+        # ).read()  # TODO use requests library instead. Response codes?
+        # xmlDict = xmltodict.parse(xml_content)
+        # isbnDirect = isbn_to_dewey(xmlDict)
+        # return isbnDirect
+    
+    if not book_instance.isbn:
+        parm_type_title = "title"
+        parm_value_title = book_instance.title
+        parm_type_author = "author"
+        parm_value_author = book_instance.author
+        search_url = (
+            base
+            + urlencode({parm_type_title: parm_value_title.encode("utf-8")})
+            + "&"
+            + urlencode({parm_type_author: parm_value_author.encode("utf-8")})
+            + summaryBase
+        )
 
-        isbnDirect = isbn_to_dewey(xmlDict)
-        return isbnDirect
-
-    elif isbn is None:
-        return "No ISBN provided"
+    xml_content = urlopen(
+        search_url
+    ).read()  # TODO use requests library instead. Response codes?
+    xmlDict = xmltodict.parse(xml_content)
+    isbnDirect = isbn_to_dewey(xmlDict)
+    return isbnDirect
 
 
 def isbn_to_dewey(xmlDict):
+    response_code = xmlDict.get("classify").get("response").get("@code")
+    SINGLE_BOOK = "0"
+    MULTIPLE_BOOKS = "4"
 
-    if xmlDict.get("classify").get("response").get("@code") == "0":
+    if response_code == SINGLE_BOOK:
         try:
             dewey_number = (
                 xmlDict.get("classify")
@@ -199,19 +230,15 @@ def isbn_to_dewey(xmlDict):
             return dewey_number
         except AttributeError:
             return "Returned book response, but has no dewey number"
-    
-    elif xmlDict.get("classify").get("response").get("@code") == "4":
+
+    elif response_code == MULTIPLE_BOOKS:
         try:
-            owi_number = (
-                xmlDict.get("classify").get("works").get("work")[0].get("@owi")
-            )
+            owi_number = xmlDict.get("classify").get("works").get("work")[0].get("@owi")
 
             base = "http://classify.oclc.org/classify2/Classify?"
             parm_type = "owi"
             parm_value = owi_number
-            search_url = base + urlencode(
-                {parm_type: parm_value.encode("utf-8")}
-            )
+            search_url = base + urlencode({parm_type: parm_value.encode("utf-8")})
             xml_content = urlopen(search_url).read()
             xmlDict = xmltodict.parse(xml_content)
 
@@ -224,9 +251,7 @@ def isbn_to_dewey(xmlDict):
             )
             return dewey_number
         except AttributeError:
-            return "multiple works found, use OWI"
-    else:
-        return "Key Error"
+            return "multiple works found, even after using OWI"
 
 
 """Find the corresponding Category titles"""
@@ -257,6 +282,11 @@ def dewey_to_category_thousand(dewey_number):
     for category in thou_cat:
         if firstNum_thousand == category.call_number[0:3]:
             return category.id
+
+
+"""Cleanup ISBN numbers"""
+# book_instance.isbn = clean_isbn(book_instance.isbn)
+# book_instance.isbn13 = clean_isbn(book_instance.isbn13)
 
 
 def clean_isbn(isbn):
@@ -294,9 +324,7 @@ def csv_import_ten_categories():
         )
 
         return redirect(
-            url_for("main.view_books_ten_categories", username="john"),
-            code=302,
-        )
+            url_for("main.view_books_ten_categories"), code=302)
 
     return """
     <!doctype html>
@@ -333,9 +361,7 @@ def csv_import_hundred_categories():
         )
 
         return redirect(
-            url_for("main.view_books_hundred_categories", username="john"),
-            code=302,
-        )
+            url_for("main.view_books_hundred_categories"), code=302)
 
     return """
     <!doctype html>
@@ -372,9 +398,7 @@ def csv_import_thousand_categories():
         )
 
         return redirect(
-            url_for("main.view_books_thousand_categories", username="john"),
-            code=302,
-        )
+            url_for("main.view_books_thousand_categories"), code=302)
 
     return """
     <!doctype html>
