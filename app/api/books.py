@@ -185,12 +185,6 @@ def request_book_data(book_instance):
             + urlencode({parm_type: parm_value.encode("utf-8")}) 
             + summaryBase
         )
-        # xml_content = urlopen(
-        #     search_url
-        # ).read()  # TODO use requests library instead. Response codes?
-        # xmlDict = xmltodict.parse(xml_content)
-        # isbnDirect = isbn_to_dewey(xmlDict)
-        # return isbnDirect
     
     if not book_instance.isbn:
         parm_type_title = "title"
@@ -205,9 +199,7 @@ def request_book_data(book_instance):
             + summaryBase
         )
 
-    xml_content = urlopen(
-        search_url
-    ).read()  # TODO use requests library instead. Response codes?
+    xml_content = urlopen(search_url).read()  # TODO use requests library instead. Response codes?
     xmlDict = xmltodict.parse(xml_content)
     isbnDirect = isbn_to_dewey(xmlDict)
     return isbnDirect
@@ -396,7 +388,6 @@ def csv_import_thousand_categories():
             initializer=category_init_func,
             mapdict=mapdict,
         )
-
         return redirect(
             url_for("main.view_books_thousand_categories"), code=302)
 

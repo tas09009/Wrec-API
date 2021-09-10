@@ -53,7 +53,7 @@ class User(UserMixin, db.Model):
             return None
         return User.query.get(data['id'])
 
-    def get_books_list(self):
+    def get_books_list(self): # not being used
         book_list = [i for i in self.books]
 
 
@@ -66,29 +66,17 @@ class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     ''' Classify API + DDC Table '''
-    classify_ddc = db.Column(db.String)
+    classify_ddc = db.Column(db.String) # rename to dewey_number
     classify_category = db.Column(db.String) # replace later with 3 other tables
     classify_ten_id = db.Column(db.Integer, db.ForeignKey('ten_categories_ddc.id')) # All 3 below were strings, forced to convert
     classify_hundred_id = db.Column(db.Integer, db.ForeignKey('hundred_categories_ddc.id'))
     classify_thousand_id = db.Column(db.Integer, db.ForeignKey('thousand_categories_ddc.id'))
 
     ''' Goodreads info from csv import '''
-    # book_id = db.Column(db.String)
     title = db.Column(db.String)
     author = db.Column(db.String)
-    # additional_authors = db.Column(db.String)
     isbn = db.Column(db.String)
     isbn13 = db.Column(db.String)
-    # my_rating = db.Column(db.Integer)
-    # avg_rating = db.Column(db.Float)
-    # publisher = db.Column(db.String)
-    # binding = db.Column(db.String)
-    # pages = db.Column(db.Integer)
-    # year_publish = db.Column(db.String) # Integer?
-    # year_publish_original = db.Column(db.String) # Integer?
-    # date_read = db.Column(db.String) # Datetime.date?
-    # date_added = db.Column(db.String) # Datetime.date?
-    # bookshelves = db.Column(db.String)
 
 
     def __init__(self, title):
@@ -128,12 +116,9 @@ class TenCategories(db.Model):
             'call_number' : self.call_number,
             'classification' : self.classification,
             'books' : []
-            # 'books' : [book.title for book in self.books]
         }
+        
         return books
-
-
-
 
 class HundredCategories(db.Model):
     __tablename__ = 'hundred_categories_ddc'
@@ -143,16 +128,12 @@ class HundredCategories(db.Model):
     tens_id = db.Column(db.Integer, db.ForeignKey('ten_categories_ddc.id'))
     thousand_values = db.relationship('ThousandCategories', backref='thousand_ten_categories')
     books = db.relationship('Book', backref='classify_hundred')
-
-    
-
-    
-    
+   
     def to_json(self):
         books = {
             'call_number' : self.call_number,
             'classification' : self.classification,
-            'books' : [book.title for book in self.books]
+            'books' : []
         }
         return books
 
@@ -169,7 +150,7 @@ class ThousandCategories(db.Model):
         books = {
             'call_number' : self.call_number,
             'classification' : self.classification,
-            'books' : [book.title for book in self.books]
+            'books' : []
         }
         return books
 

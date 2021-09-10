@@ -63,7 +63,6 @@ def circle_packing_view():
 @login_required
 def view_books_by_user():
     user_books = User.query.filter_by(id=current_user.id).first().books.all()
-
     books_list = [book.serialize() for book in user_books]
     return jsonify(books_list)
 
@@ -76,30 +75,28 @@ def view_books_ten_categories():
 
     users_books_within_ten = []
     for category in ten_cat:
-        classification = category.to_json()
-        for book in user_books:
-            if book.classify_ten_id == category.id:
-                classification["books"].append(book.title)
+        book_class = category.to_json()
+        filtered_books = list(filter(lambda b: b.classify_ten_id == category.id, user_books))
+        filtered_books_titles = [i.title for i in filtered_books]
+        book_class["books"].extend(filtered_books_titles)
 
-        users_books_within_ten.append(classification)
+        users_books_within_ten.append(book_class)
     return jsonify(users_books_within_ten)
 
 
 @main.route("/hundred_categories")
 @login_required
 def view_books_hundred_categories():
-
     user_books = User.query.filter_by(id=current_user.id).first().books.all()
     hun_cat = HundredCategories.query.all()
 
     users_books_within_ten = []
     for category in hun_cat:
-        classification = category.to_json()
-        for book in user_books:
-            if book.classify_ten_id == category.id:
-                classification["books"].append(book.title)
-
-        users_books_within_ten.append(classification)
+        book_class = category.to_json()
+        filtered_books = list(filter(lambda b: b.classify_hundred_id == category.id, user_books))
+        filtered_books_titles = [i.title for i in filtered_books]
+        book_class["books"].extend(filtered_books_titles)
+        users_books_within_ten.append(book_class)
     return jsonify(users_books_within_ten)
 
 
@@ -111,10 +108,10 @@ def view_books_thousand_categories():
 
     users_books_within_ten = []
     for category in thou_cat:
-        classification = category.to_json()
-        for book in user_books:
-            if book.classify_ten_id == category.id:
-                classification["books"].append(book.title)
+        book_class = category.to_json()
+        filtered_books = list(filter(lambda b: b.classify_thousand_id == category.id, user_books))
+        filtered_books_titles = [i.title for i in filtered_books]
+        book_class["books"].extend(filtered_books_titles)
 
-        users_books_within_ten.append(classification)
+        users_books_within_ten.append(book_class)
     return jsonify(users_books_within_ten)
