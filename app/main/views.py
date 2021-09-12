@@ -14,13 +14,11 @@ def index():
     return render_template("index.html")
 
 
-@main.route("/books_by_category")  # TODO user isn't used in function
+@main.route("/circlepacking")
 @login_required
 def circle_packing_view():
 
-    # user = User.query.filter_by(id=current_user.id).first()
     user_books = User.query.filter_by(id=current_user.id).first().books.all()
-
     ten_cat = TenCategories.query.all()
 
     tens_list = []
@@ -28,9 +26,7 @@ def circle_packing_view():
     for i in ten_cat:
         ten_placeholder = {}
         hun_list = []
-        ten_title = (
-            i.call_number + " | " + i.classification
-        )  
+        ten_title = i.call_number + " | " + i.classification
         ten_placeholder["name"] = ten_title
         ten_placeholder["children"] = hun_list
         for j in i.hundred_values:
@@ -44,16 +40,11 @@ def circle_packing_view():
                 tho_placeholder = {}
                 tho_title = k.call_number + " | " + k.classification
                 tho_placeholder["name"] = tho_title
-                tho_placeholder["children"] = [i.title for i in k.books]
-
-                # Add user's books only
-
-                # tho_placeholder["children"] = []
-                # for book in user_books:
-                #     if book.classify_thousand_id ==
-
+                tho_placeholder["children"] = []
+                filtered_books = list(filter(lambda b: b.classify_thousand_id == k.id, user_books))
+                filtered_books_titles = [i.title for i in filtered_books]
+                tho_placeholder["children"].extend(filtered_books_titles)
                 tho_list.append(tho_placeholder)
-
         tens_list.append(ten_placeholder)
 
     return jsonify(books_dict)

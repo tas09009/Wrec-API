@@ -15,6 +15,7 @@ bootstrap = Bootstrap()
 mail = Mail()
 db = SQLAlchemy()
 migrate = Migrate()
+# excel.init_excel() 
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 

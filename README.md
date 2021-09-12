@@ -23,6 +23,8 @@ Let's build a world where recommendations give you a breadth of knowledge, not j
 This idea started off with the idea of "I don't know what I don't know" when it comes to consuming things like books, music and movies. Every recommendation system is trying to keep you within your bubble of interests but we want to build something that makes you aware of what else is out there, especially to try something new for the first time.
 
 The purpose of this project is to compare a user's book classifications to the total available classifications. One way this is done is by using the Dewey Decimal System. Most data visulizations show what you have consumed but not what you HAVEN'T consumed.  
+
+An easy way to approach this is using the [D3 Zoomable Circle Packing Visualization](http://jeromefroe.github.io/circlepackeR/). When looking at the second visualization, we can see the type of [JSON structure](https://gist.githubusercontent.com/mbostock/1093025/raw/05621a578a66fba4d2cbf5a77e2d1bb3a27ac3d4/flare.json) that needs to be returned 
 ## Background
 
 This project uses Flask for the backend in order to return a [JSON](https://gist.githubusercontent.com/mbostock/1093025/raw/05621a578a66fba4d2cbf5a77e2d1bb3a27ac3d4/flare.json) file to incorporate [D3 Zoomable Circle Packing Visualization](https://jeromefroe.github.io/circlepackeR/).

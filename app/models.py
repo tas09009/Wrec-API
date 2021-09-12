@@ -79,13 +79,18 @@ class Book(db.Model):
     isbn13 = db.Column(db.String)
 
 
-    def __init__(self, title):
+    def __init__(self, title, author, isbn, isbn13):
         self.title = title
+        self.author = author
+        self.isbn = isbn
+        self.isbn13 = isbn13
 
     def __repr__(self):
         return '<Book %r>' % self.title
 
     def serialize(self):
+        # category_ten = TenCategories.query.filter_by(id=self.classify_ten_id).first()
+        # category_ten + "|" + category_ten.classification
         book_user = {
             'title' : self.title,
             'author' : self.author,
