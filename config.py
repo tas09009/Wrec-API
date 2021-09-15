@@ -13,9 +13,6 @@ class Config:
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     SSL_REDIRECT = False
-    uri = os.getenv("DATABASE_URL")  # or other relevant config var
-    if uri.startswith("postgres://"):
-        uri = uri.replace("postgres://", "postgresql://", 1)
     
     ''' calling init_app on the extensions completes their initialization '''
     @staticmethod
@@ -43,6 +40,9 @@ class ProductionConfig(Config):
 '''logging of lesser messages'''
 class HerokuConfig(ProductionConfig):
     SSL_REDIRECT = True if os.environ.get('DYNO') else False
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")  # or other relevant config var
+    if SQLALCHEMY_DATABASE_URI.startswith("postgres://"):
+        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace("postgres://", "postgresql://", 1)
     
     @classmethod
     def init_app(cls, app):
