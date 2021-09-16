@@ -1,8 +1,8 @@
-"""empty message
+"""all_tables_API
 
-Revision ID: 4f834e50fcfb
-Revises: 8cd4caa1a077
-Create Date: 2021-09-04 15:55:52.820113
+Revision ID: d08c44624786
+Revises: 8cbe23b4c39e
+Create Date: 2021-09-16 17:37:58.421249
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '4f834e50fcfb'
-down_revision = '8cd4caa1a077'
+revision = 'd08c44624786'
+down_revision = '8cbe23b4c39e'
 branch_labels = None
 depends_on = None
 
@@ -56,22 +56,10 @@ def upgrade():
     sa.Column('classify_ten_id', sa.Integer(), nullable=True),
     sa.Column('classify_hundred_id', sa.Integer(), nullable=True),
     sa.Column('classify_thousand_id', sa.Integer(), nullable=True),
-    sa.Column('book_id', sa.String(), nullable=True),
     sa.Column('title', sa.String(), nullable=True),
     sa.Column('author', sa.String(), nullable=True),
-    sa.Column('additional_authors', sa.String(), nullable=True),
     sa.Column('isbn', sa.String(), nullable=True),
     sa.Column('isbn13', sa.String(), nullable=True),
-    sa.Column('my_rating', sa.Integer(), nullable=True),
-    sa.Column('avg_rating', sa.Float(), nullable=True),
-    sa.Column('publisher', sa.String(), nullable=True),
-    sa.Column('binding', sa.String(), nullable=True),
-    sa.Column('pages', sa.Integer(), nullable=True),
-    sa.Column('year_publish', sa.String(), nullable=True),
-    sa.Column('year_publish_original', sa.String(), nullable=True),
-    sa.Column('date_read', sa.String(), nullable=True),
-    sa.Column('date_added', sa.String(), nullable=True),
-    sa.Column('bookshelves', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['classify_hundred_id'], ['hundred_categories_ddc.id'], ),
     sa.ForeignKeyConstraint(['classify_ten_id'], ['ten_categories_ddc.id'], ),
     sa.ForeignKeyConstraint(['classify_thousand_id'], ['thousand_categories_ddc.id'], ),
