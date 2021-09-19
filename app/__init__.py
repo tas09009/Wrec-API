@@ -6,12 +6,14 @@ from config import config
 from flask_login import LoginManager
 import flask_excel as excel
 from flask_mail import Mail
+from flask_cors import CORS
 
 '''
 Flask Configuration Object - Application Factory / Factory Function
 '''
 
 bootstrap = Bootstrap()
+cors = CORS()
 mail = Mail()
 db = SQLAlchemy()
 migrate = Migrate()
@@ -30,6 +32,7 @@ def create_app(config_name):
     db.init_app(app)
     login_manager.init_app(app)
     excel.init_excel(app) # should this be excel.init_excel.init_app(app)?
+    cors.init_app(app)
 
     if app.config['SSL_REDIRECT']:
         from flask_sslify import SSLify
