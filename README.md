@@ -2,9 +2,6 @@
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
 Let's build a world where recommendations give you a breadth of knowledge, not just depth.
-
-
-
 ## Table of Contents
 
 - [Objective](#objective)
@@ -12,6 +9,7 @@ Let's build a world where recommendations give you a breadth of knowledge, not j
 - [Install](#install)
 - [Environment variables](#env-variables)
 - [Back End](#backend)
+- [API Endpoints](#api-endpoints)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -21,10 +19,10 @@ This idea started off with the idea of "I don't know what I don't know" when it 
 
 The purpose of this project is to compare a user's book classifications to the total available classifications. One way this is done is by using the Dewey Decimal System. Most data visulizations show what you have consumed but not what you HAVEN'T consumed.  
 
-An easy way to approach this is using the [D3 Zoomable Circle Packing Visualization](http://jeromefroe.github.io/circlepackeR/). When looking at the second visualization, we can see the type of [JSON structure](https://gist.githubusercontent.com/mbostock/1093025/raw/05621a578a66fba4d2cbf5a77e2d1bb3a27ac3d4/flare.json) that needs to be returned 
+An easy way to approach this is using the [D3 Zoomable Circle Packing Visualization](http://jeromefroe.github.io/circlepackeR/). When looking at the second visualization, we can see the type of [JSON structure](https://gist.githubusercontent.com/mbostock/1093025/raw/05621a578a66fba4d2cbf5a77e2d1bb3a27ac3d4/flare.json) that needs to be returned. See "API Endpoints" section below to return a circle packing json. 
 ## Background
 
-This project uses Flask for the backend in order to return a [JSON](https://gist.githubusercontent.com/mbostock/1093025/raw/05621a578a66fba4d2cbf5a77e2d1bb3a27ac3d4/flare.json) file to incorporate [D3 Zoomable Circle Packing Visualization](https://jeromefroe.github.io/circlepackeR/).
+This project uses the Flask framework for designing the API, PostgreSQL as the database and Heroku for deployment.
 
 Here are some files which you may find helpful when diving into the project:
 - `wrec-schema.jpg` - diagram of all the models
@@ -61,6 +59,27 @@ secrets.token_hex(24)
 	- DDSGORun0.csv > `/category/ten/upload`
 	- DDSGORun1.csv > `/category/hundred/upload`
 	- DDSGORun2.csv > `/category/thousand/upload`
+
+
+## API Endpoints
+
+TO DO: Add documentation in [Swagger](https://swagger.io/). For now, here is a quick guide:
+
+User Navigation
+- Registration - *need to add*
+- Login: `/auth/login`
+- Logout: `/auth/logout`
+
+Upload books:
+`/api/v1/books/upload` - import csv file from goodreads
+
+Display book data:
+- `/list_of_books` - see user's book data including dewey decimal numbers and 
+![list_of_books](media/list_of_books_endpoint.png)
+
+- `/circlepacking` - [JSON structure](https://gist.githubusercontent.com/mbostock/1093025/raw/05621a578a66fba4d2cbf5a77e2d1bb3a27ac3d4/flare.json)
+- 
+
 ## Contributing
 Please follow along this excellent [step-by-step guide](https://www.dataschool.io/how-to-contribute-on-github/) to learn how to contribute to an open-source project
 
