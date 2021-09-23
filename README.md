@@ -63,7 +63,7 @@ secrets.token_hex(24)
 
 ## API Endpoints
 
-TO DO: Add documentation in [Swagger](https://swagger.io/). For now, here is a quick guide:
+Documentation will be created in [Swagger](https://swagger.io/). For now, here is a quick guide:
 
 User Navigation
 - Registration - *need to add*
@@ -74,11 +74,28 @@ Upload books:
 `/api/v1/books/upload` - import csv file from goodreads
 
 Display book data:
-- `/list_of_books` - see user's book data including dewey decimal numbers and 
+
+`/list_of_books` - see user's book data
+
 ![list_of_books](media/list_of_books_endpoint.png)
 
-- `/circlepacking` - [JSON structure](https://gist.githubusercontent.com/mbostock/1093025/raw/05621a578a66fba4d2cbf5a77e2d1bb3a27ac3d4/flare.json)
-- 
+`/circlepacking` - [Circle Packing Visualization](http://jeromefroe.github.io/circlepackeR/)
+
+![circle_packing](media/circlepacking_endpoint.png)
+
+`/ten_categories` - books grouped by [ten categories](https://github.com/tas09009/Wrec-API/blob/main/externalFiles/dewey_classifications/DDSGORun0.csv)
+
+![ten_categories](media/ten_categories_endpoint.png)
+
+`/hundred_categories` - books grouped by [hundred categories](https://github.com/tas09009/Wrec-API/blob/main/externalFiles/dewey_classifications/DDSGORun1.csv)
+
+![hundred_categories](media/hundred_categories_endpoint.png)
+
+`/thousand_categories` - books grouped by [thousand_categories](https://github.com/tas09009/Wrec-API/blob/main/externalFiles/dewey_classifications/DDSGORun2.csv)
+
+![thousand_categories_endpoint](media/thousand_categories_endpoint.png)
+
+
 
 ## Contributing
 Please follow along this excellent [step-by-step guide](https://www.dataschool.io/how-to-contribute-on-github/) to learn how to contribute to an open-source project
