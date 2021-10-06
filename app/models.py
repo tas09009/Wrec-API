@@ -33,7 +33,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(64), unique=True, index=True)
     username = db.Column(db.String(64), unique=True)
     password_hash = db.Column(db.String(128))
-    # confirmed = db.Column(db.Boolean, default=False)
+    confirmed = db.Column(db.Boolean, default=False)
     books = db.relationship('Book',
                             secondary=bookshelf,
                             backref=db.backref('users', lazy='dynamic'),
