@@ -20,7 +20,7 @@ def page_not_found(e):
         response.status_code = 404
         return response
     
-    # return render_template('404.html'), 404
+    return render_template('404.html'), 404
 
 
 @main.app_errorhandler(500)

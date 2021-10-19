@@ -13,9 +13,9 @@ class Config:
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     SSL_REDIRECT = False
-    FLASKY_MAIL_SUBJECT_PREFIX = '[Wrec]'
-    FLASKY_MAIL_SENDER = 'Wrec Admin <wrec@example.com>'
-    FLASKY_ADMIN = os.environ.get('FLASKY_ADMIN')
+    WREC_MAIL_SUBJECT_PREFIX = '[Wrec]'
+    WREC_MAIL_SENDER = 'Wrec Admin <wrec@example.com>'
+    WREC_ADMIN = os.environ.get('WREC_ADMIN')
     
     ''' calling init_app on the extensions completes their initialization '''
     @staticmethod
