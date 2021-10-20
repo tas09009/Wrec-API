@@ -44,7 +44,9 @@ def circle_packing_view():
                 tho_title = k.call_number + " | " + k.classification
                 tho_placeholder["name"] = tho_title
                 tho_placeholder["children"] = []
-                filtered_books = list(filter(lambda b: b.classify_thousand_id == k.id, user_books))
+                filtered_books = list(
+                    filter(lambda b: b.classify_thousand_id == k.id, user_books)
+                )
                 filtered_books_titles = [i.title for i in filtered_books]
                 tho_placeholder["children"].extend(filtered_books_titles)
                 tho_list.append(tho_placeholder)
@@ -70,7 +72,9 @@ def view_books_ten_categories():
     users_books_within_ten = []
     for category in ten_cat:
         book_class = category.to_json()
-        filtered_books = list(filter(lambda b: b.classify_ten_id == category.id, user_books))
+        filtered_books = list(
+            filter(lambda b: b.classify_ten_id == category.id, user_books)
+        )
         filtered_books_titles = [i.title for i in filtered_books]
         book_class["books"].extend(filtered_books_titles)
 
@@ -84,14 +88,16 @@ def view_books_hundred_categories():
     user_books = User.query.filter_by(id=current_user.id).first().books.all()
     hun_cat = HundredCategories.query.all()
 
-    users_books_within_ten = []
+    users_books_within_hun = []
     for category in hun_cat:
         book_class = category.to_json()
-        filtered_books = list(filter(lambda b: b.classify_hundred_id == category.id, user_books))
+        filtered_books = list(
+            filter(lambda b: b.classify_hundred_id == category.id, user_books)
+        )
         filtered_books_titles = [i.title for i in filtered_books]
         book_class["books"].extend(filtered_books_titles)
-        users_books_within_ten.append(book_class)
-    return jsonify(users_books_within_ten)
+        users_books_within_hun.append(book_class)
+    return jsonify(users_books_within_hun)
 
 
 @main.route("/thousand_categories")
@@ -100,18 +106,20 @@ def view_books_thousand_categories():
     user_books = User.query.filter_by(id=current_user.id).first().books.all()
     thou_cat = ThousandCategories.query.all()
 
-    users_books_within_ten = []
+    users_books_within_thou = []
     for category in thou_cat:
         book_class = category.to_json()
-        filtered_books = list(filter(lambda b: b.classify_thousand_id == category.id, user_books))
+        filtered_books = list(
+            filter(lambda b: b.classify_thousand_id == category.id, user_books)
+        )
         filtered_books_titles = [i.title for i in filtered_books]
         book_class["books"].extend(filtered_books_titles)
 
-        users_books_within_ten.append(book_class)
-    return jsonify(users_books_within_ten)
+        users_books_within_thou.append(book_class)
+    return jsonify(users_books_within_thou)
 
 
-@main.route('/', methods=['GET', 'POST'])
+@main.route("/", methods=["GET", "POST"])
 def index():
     form = NameForm()
     if form.validate_on_submit():
@@ -120,14 +128,21 @@ def index():
             user = User(username=form.name.data)
             db.session.add(user)
             db.session.commit()
-            session['known'] = False
-            if current_app.config['WREC_ADMIN']:
-                send_email(current_app.config['WREC_ADMIN'], 'New User',
-                           'mail/new_user', user=user)
+            session["known"] = False
+            if current_app.config["WREC_ADMIN"]:
+                send_email(
+                    current_app.config["WREC_ADMIN"],
+                    "New User",
+                    "mail/new_user",
+                    user=user,
+                )
         else:
-            session['known'] = True
-        session['name'] = form.name.data
-        return redirect(url_for('.index'))
-    return render_template('index.html',
-                           form=form, name=session.get('name'),
-                           known=session.get('known', False))
+            session["known"] = True
+        session["name"] = form.name.data
+        return redirect(url_for(".index"))
+    return render_template(
+        "index.html",
+        form=form,
+        name=session.get("name"),
+        known=session.get("known", False),
+    )

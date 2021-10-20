@@ -1,9 +1,11 @@
 from urllib.request import urlopen
 from urllib.parse import urlencode
+
 # import re
 
 from flask import request, redirect, url_for, jsonify
 from flask_login import login_required, current_user
+
 # import flask_excel as excel  # not being used?
 import xmltodict
 
@@ -25,7 +27,7 @@ def csv_import():
     """Upload a goodreads csv file > populate database."""
 
     if request.method == "POST":
-        resp = jsonify({"result": request.get_array(field_name='file')})
+        resp = jsonify({"result": request.get_array(field_name="file")})
         result = resp.get_json()
 
         books_upload = result["result"]
@@ -39,7 +41,7 @@ def csv_import():
             author = book_item[AUTHOR]
             isbn = book_item[ISBN]
             isbn13 = book_item[ISBN13]
-            print('book attributes: ', title, author, isbn, isbn13, '\n')
+            print("book attributes: ", title, author, isbn, isbn13, "\n")
             determine_book_unique(isbn, isbn13, title, author)
 
         populate_nested_structure()
@@ -54,6 +56,7 @@ def csv_import():
     </form>
     """
 
+
 def determine_book_unique(isbn, isbn13, title, author):
     """
     if: book doesn't exist in the database, add it,
@@ -66,22 +69,30 @@ def determine_book_unique(isbn, isbn13, title, author):
     if book_isbn is None or book_isbn13 is None or (book_title and book_author is None):
         book_instance = Book(title=title, author=author, isbn=isbn, isbn13=isbn13)
         book_instance.classify_ddc = request_dewey(book_instance)
-        book_instance.classify_ten_id = dewey_to_category_ten(book_instance.classify_ddc)
-        book_instance.classify_hundred_id = dewey_to_category_hundred(book_instance.classify_ddc)
-        book_instance.classify_thousand_id = dewey_to_category_thousand(book_instance.classify_ddc)
+        book_instance.classify_ten_id = dewey_to_category_ten(
+            book_instance.classify_ddc
+        )
+        book_instance.classify_hundred_id = dewey_to_category_hundred(
+            book_instance.classify_ddc
+        )
+        book_instance.classify_thousand_id = dewey_to_category_thousand(
+            book_instance.classify_ddc
+        )
         current_user.books.append(book_instance)
         db.session.add(book_instance)
         db.session.add(current_user)
         db.session.commit()
-        print("Unique book, adding: ", book_instance, '\n')
+        print("Unique book, adding: ", book_instance, "\n")
     else:
-        book_in_database = Book.query.filter_by(isbn=str(isbn)).first() or \
-            Book.query.filter_by(isbn13=str(isbn13)).first() or \
-            Book.query.filter_by(title=title, author=author).first()
+        book_in_database = (
+            Book.query.filter_by(isbn=str(isbn)).first()
+            or Book.query.filter_by(isbn13=str(isbn13)).first()
+            or Book.query.filter_by(title=title, author=author).first()
+        )
         book_in_database.users.append(current_user)
         db.session.add(book_in_database)
         db.session.commit()
-        print("Book exists, skipping: ", book_in_database, '\n')
+        print("Book exists, skipping: ", book_in_database, "\n")
 
 
 @api.route("/dewey/", methods=["GET"])
@@ -103,11 +114,9 @@ def request_dewey(book_instance):
         parm_type = "isbn"
         parm_value = str(book_instance.isbn)
         search_url = (
-            base
-            + urlencode({parm_type: parm_value.encode("utf-8")})
-            + summaryBase
+            base + urlencode({parm_type: parm_value.encode("utf-8")}) + summaryBase
         )
-    
+
     elif not book_instance.isbn:
         parm_type_title = "title"
         parm_value_title = book_instance.title
@@ -150,7 +159,9 @@ def isbn_to_dewey(book_data):
 
     elif response_code == MULTIPLE_BOOKS:
         try:
-            owi_number = book_data.get("classify").get("works").get("work")[0].get("@owi")
+            owi_number = (
+                book_data.get("classify").get("works").get("work")[0].get("@owi")
+            )
 
             base = "http://classify.oclc.org/classify2/Classify?"
             parm_type = "owi"
@@ -169,7 +180,8 @@ def isbn_to_dewey(book_data):
             return dewey_number
         except AttributeError:
             return "multiple works found, even after using OWI"
-    else: return 'Cannot find dewey'
+    else:
+        return "Cannot find dewey"
 
 
 def dewey_to_category_ten(dewey_number):
@@ -204,6 +216,7 @@ def populate_nested_structure():
     nest 100 'HundredCategories' within 10 'TenCategories'
     nest 100 'ThousandCategories' within 10 'HundredCategories'
     """
+
     def populate_ten_classes():
         ten_cat = TenCategories.query.all()
         hun_cat = HundredCategories.query.all()
@@ -236,7 +249,6 @@ def populate_nested_structure():
 
     populate_ten_classes()
     populate_hundred_classes()
-
 
 
 """Cleanup ISBN numbers"""
@@ -278,8 +290,7 @@ def csv_import_ten_categories():
             mapdict=mapdict,
         )
 
-        return redirect(
-            url_for("main.view_books_ten_categories"), code=302)
+        return redirect(url_for("main.view_books_ten_categories"), code=302)
 
     return """
     <!doctype html>
@@ -315,8 +326,7 @@ def csv_import_hundred_categories():
             mapdict=mapdict,
         )
 
-        return redirect(
-            url_for("main.view_books_hundred_categories"), code=302)
+        return redirect(url_for("main.view_books_hundred_categories"), code=302)
 
     return """
     <!doctype html>
@@ -351,8 +361,7 @@ def csv_import_thousand_categories():
             initializer=category_init_func,
             mapdict=mapdict,
         )
-        return redirect(
-            url_for("main.view_books_thousand_categories"), code=302)
+        return redirect(url_for("main.view_books_thousand_categories"), code=302)
 
     return """
     <!doctype html>

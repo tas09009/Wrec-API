@@ -2,7 +2,7 @@ from functools import wraps
 from flask import g
 from .errors import forbidden
 
-# Only used for admin purposes
+# Only used for admin purposes - future
 def permission_required(permission):
     def decorator(f):
         @wraps(f)
