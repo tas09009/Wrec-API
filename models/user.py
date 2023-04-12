@@ -1,10 +1,7 @@
-from db import db
+# from db import db
 
-class UserModel(db.Model):
-    __tablename__ = "users"
+# class User(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     name = db.Column(db.String(64))
+#     books = db.relationship('Book', backref='user', lazy='dynamic')
 
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(80), nullable=False)
-    book_id = db.Column(db.Integer, db.ForeignKey("books.id"), unique=False, nullable=False)
-    book = db.relationship("BookModel", back_populates="users")

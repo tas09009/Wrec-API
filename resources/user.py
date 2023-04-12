@@ -1,13 +1,36 @@
-# from flask import request
-# from flask.views import MethodView
+from flask.views import MethodView
 from flask_smorest import Blueprint, abort
-# from sqlalchemy.exc import SQLAlchemyError
+from marshmallow import ValidationError
 
-# from db import db
-# from models import ItemModel
-# from schemas import ItemSchema, ItemUpdateSchema
+from models import User, Book
+# from schemas import UserSchema, BookSchema, CirclePackingResponseSchema
+from db import db
 
-blp = Blueprint("users", __name__, description="Operations on Users")
+blp = Blueprint(
+    'circle_packing', 'circle_packing', url_prefix='/circle-packing'
+)
+
+
+@blp.route('/users/<int:user_id>/circle-packing')
+class CirclePackingView(MethodView):
+
+    @blp.arguments(200, user_id)
+    def circle_packing(self, user_id):
+        return {"message": "returning user's circle packing data"}
+
+    # @blp.arguments(200, user_id)
+    # @blp.response(CirclePackingResponseSchema)
+    # def circle_packing(self, user_id):
+    #     user = User.query.get(user_id)
+    #     if user is None:
+    #         abort(404, message="User not found")
+
+    #     books = Book.query.filter_by(user_id=user.id).all()
+    #     book_data = [BookSchema().dump(book) for book in books]
+    #     packing_data = create_circle_packing(book_data)
+    #     return {'packing_data': packing_data}
+
+
 
 # @blp.route("/item/<string:item_id>")
 # class Item(MethodView):

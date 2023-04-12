@@ -4,21 +4,43 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 
 from db import db
+from models import Book, User
+
 # from models import StoreModel
 # from schemas import StoreSchema
 from scripts.generate_circle_packing_json import generate_dewey_categories_blueprint
 
 blp = Blueprint("books", __name__, description="Operations on books")
 
-@blp.route("/bookshelf")
-class BookShelf(MethodView):
-
-    @blp.response(200)
-    def get(self):
-        return generate_dewey_categories_blueprint()
 
 
-#@blp.route("/update_books")
+
+# from flask import Flask, jsonify
+# from flask_sqlalchemy import SQLAlchemy
+
+
+# @blp.route('/bookshelf/<int:user_id>')
+# def get_bookshelf(user_id):
+#     books = db.session.query(Book).join(User).filter(User.id == user_id).all()
+#     data = BookshelfSchema().dump({
+#         'name': 'Bookshelf',
+#         'children': group_books_by_category(books)
+#     })
+#     return jsonify(data)
+
+
+# # OLD
+# @blp.route("/bookshelf")
+# class BookShelf(MethodView):
+
+#     @blp.response(200)
+#     def get(self):
+#         return generate_dewey_categories_blueprint()
+
+
+
+
+# @blp.route("/update_books")
 # Get latest info from goodreads
 
 # -------------------------------------------------------
