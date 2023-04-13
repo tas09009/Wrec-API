@@ -9,11 +9,16 @@ from marshmallow import Schema, fields
 #     dewey_decimal = fields.Str()
 
 
-# class UserSchema(Schema):
-#     id = fields.Int()
-#     name = fields.Str()
-#     books = fields.List(fields.Nested(BookSchema))
+class UserSchema(Schema):
+    id = fields.Int()
+    name = fields.Str()
 
 
 # class CirclePackingResponseSchema(Schema):
 #     packing_data = fields.Dict()
+
+
+
+
+
+#     books = fields.List(fields.Nested(BookSchema))

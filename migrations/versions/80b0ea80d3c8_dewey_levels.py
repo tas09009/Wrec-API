@@ -1,7 +1,7 @@
 """dewey levels
 
 Revision ID: 80b0ea80d3c8
-Revises: 
+Revises:
 Create Date: 2023-04-11 14:14:34.416049
 
 """
@@ -59,4 +59,11 @@ def downgrade():
     op.drop_table('dewey_level_2')
     op.drop_table('dewey_level_1')
     op.drop_table('dewey_decimal_system')
+
+    # start id's at 1, rather than where they left off in the upgrade/downgrade
+    # reset the sequence for the id column in dewey_level_1 table
+    op.execute("SELECT setval('dewey_level_1_id_seq', 1, false);")
+    op.execute("SELECT setval('dewey_level_2_id_seq', 1, false);")
+    op.execute("SELECT setval('dewey_level_3_id_seq', 1, false);")
+    op.execute("SELECT setval('dewey_decimal_system_id_seq', 1, false);")
     # ### end Alembic commands ###

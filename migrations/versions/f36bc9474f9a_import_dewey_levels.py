@@ -20,6 +20,7 @@ branch_labels = None
 depends_on = None
 
 
+#TODO: combine this with previous script to avoid upgrading each script individually
 def upgrade():
 
     # Create a new DeweyDecimalSystem record for level 1
@@ -90,6 +91,11 @@ def downgrade():
     conn.execute(sa.text("DELETE FROM dewey_level_3"))
     conn.execute(sa.text("DELETE FROM dewey_level_2"))
     conn.execute(sa.text("DELETE FROM dewey_level_1"))
-
-    # Delete all rows from dewey_decimal_system table
     conn.execute(sa.text("DELETE FROM dewey_decimal_system"))
+
+    # # start id's at 1, rather than where they left off in the upgrade/downgrade
+    # # reset the sequence for the id column in dewey_level_1 table
+    # op.execute("SELECT setval('dewey_level_1_id_seq', 1, false);")
+    # op.execute("SELECT setval('dewey_level_2_id_seq', 1, false);")
+    # op.execute("SELECT setval('dewey_level_3_id_seq', 1, false);")
+    # op.execute("SELECT setval('dewey_decimal_system_id_seq', 1, false);")

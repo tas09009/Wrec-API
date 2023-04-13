@@ -1,23 +1,59 @@
+import csv
+import io
+from flask import request
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from marshmallow import ValidationError
+from sqlalchemy.exc import SQLAlchemyError
 
 from models import User, Book
-# from schemas import UserSchema, BookSchema, CirclePackingResponseSchema
+from schemas import UserSchema, BookSchema
 from db import db
 
-blp = Blueprint(
-    'circle_packing', 'circle_packing', url_prefix='/circle-packing'
-)
+blp = Blueprint("Users", "users", description="Operations on users")
+
+@blp.route('/user/<int:user_id>')
+class User(MethodView):
+    @blp.arguments(200, UserSchema)
+    def get(self, user_id):
+        user = User.query.get_or_404(user_id)
+        if not user:
+            abort(404, message="User not found")
+        return user
+
+@blp.route('/register')
+class UserRegister(MethodView):
+    @blp.arguments(UserSchema)
+    def post(self, user_data):
+        if User.query.filter(User.name == user_data["name"]).first():
+            abort(409, messsage="A user with that name already exists")
+        kristen = User(name='kristen')
+        db.session.add(kristen)
+        db.session.commit()
+
+        return {"message": "User created successfully."}, 201
+
+@blp.route('/users/<int:user_id>/books')
+def post():
+    with open("goodreadsKirstenKorevaar_sample.csv") as csv_file:
+        reader = csv.DictReader(csv_file)
+
+        for row in reader:
+            book = Book(
+                title=row['Title'],
+                author=row['Author'],
+                isbn=row['ISBN'],
+                value=1,
+                user_d=kristen.id
+            )
+            db.session.add(book)
+            db.session.commit()
+
+    print("Successfully uploaded all books")
+    return {"message": "Successfully uploaded all books"}
 
 
-@blp.route('/users/<int:user_id>/circle-packing')
-class CirclePackingView(MethodView):
-
-    @blp.arguments(200, user_id)
-    def circle_packing(self, user_id):
-        return {"message": "returning user's circle packing data"}
-
+# @blp.route('/users/<int:user_id>/circle-packing')
     # @blp.arguments(200, user_id)
     # @blp.response(CirclePackingResponseSchema)
     # def circle_packing(self, user_id):
