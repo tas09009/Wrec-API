@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 import models
 
 from db import db
-# from resources.user import blp as UserBlueprint
+from resources.user import blp as UserBlueprint
 
 def create_app(db_url=None):
     app = Flask(__name__)
@@ -33,6 +33,6 @@ def create_app(db_url=None):
     migrate = Migrate(app, db)
     api = Api(app)
 
-    # api.register_blueprint(UserBlueprint)
+    api.register_blueprint(UserBlueprint)
 
     return app

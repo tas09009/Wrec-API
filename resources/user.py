@@ -4,17 +4,18 @@ from flask import request
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from marshmallow import ValidationError
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
-from models import User, Book
-from schemas import UserSchema, BookSchema
 from db import db
+from models import User, Book
+from schemas import UserSchema
 
 blp = Blueprint("Users", "users", description="Operations on users")
 
 @blp.route('/user/<int:user_id>')
 class User(MethodView):
-    @blp.arguments(200, UserSchema)
+
+    @blp.arguments(UserSchema)
     def get(self, user_id):
         user = User.query.get_or_404(user_id)
         if not user:
@@ -23,15 +24,32 @@ class User(MethodView):
 
 @blp.route('/register')
 class UserRegister(MethodView):
+
     @blp.arguments(UserSchema)
+    @blp.response(201, UserSchema)
     def post(self, user_data):
-        if User.query.filter(User.name == user_data["name"]).first():
-            abort(409, messsage="A user with that name already exists")
-        kristen = User(name='kristen')
-        db.session.add(kristen)
+        return {"testing_user": f"{user_data}"}, 201
+        user = User(**user_data)
+        try:
+            db.session.add(user)
+            db.session.commit()
+        except IntegrityError:
+            abort(400, message="User with that name already exists")
+        except SQLAlchemyError:
+            abort(400, message="An error occured while adding the user")
+        return user
+
+        # return {"user_data": f"{User.query.filter}"}, 201
+        u = User.query.filter(id=1).first()
+        return {"testing_user": f"{u.name}"}, 201
+        if User.query.filter(User.name==user_data["name"]).first():
+            abort(409, message="A user with that name already exists")
+        user = User(name=user_data["name"])
+        db.session.add(user)
         db.session.commit()
 
         return {"message": "User created successfully."}, 201
+
 
 @blp.route('/users/<int:user_id>/books')
 def post():
