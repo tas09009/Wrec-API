@@ -2,23 +2,19 @@
 from marshmallow import Schema, fields
 
 
-
-# class BookSchema(Schema):
-#     id = fields.Int()
-#     title = fields.Str()
-#     dewey_decimal = fields.Str()
-
-
-class UserSchema(Schema):
+class PlainUserSchema(Schema):
     id = fields.Int(dump_only=True)
     name = fields.Str(required=True)
 
+class PlainBookSchema(Schema):
+    id = fields.Int(dump_only=True)
+    title = fields.Str(required=True)
+    author = fields.Str()
+    dewey_decimal = fields.Int()
+    isbn = fields.Str()
 
-# class CirclePackingResponseSchema(Schema):
-#     packing_data = fields.Dict()
+class UserSchema(PlainUserSchema):
+    books = fields.List(fields.Nested(PlainBookSchema()), many=True, dump_only=True)
+class BookSchema(PlainBookSchema):
+    users = fields.List(fields.Nested(PlainUserSchema()), many=True, dump_only=True)
 
-
-
-
-
-#     books = fields.List(fields.Nested(BookSchema))

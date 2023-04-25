@@ -7,9 +7,12 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 
 import models
+from models.users_books import UsersBooks
+
 
 from db import db
 from resources.user import blp as UserBlueprint
+from resources.book import blp as BookBlueprint
 
 def create_app(db_url=None):
     app = Flask(__name__)
@@ -27,12 +30,10 @@ def create_app(db_url=None):
     CORS(app)
     db.init_app(app) # connects app to SQLalchemy
 
-    # with app.app_context():
-    #     db.create_all()
-
     migrate = Migrate(app, db)
     api = Api(app)
 
     api.register_blueprint(UserBlueprint)
+    api.register_blueprint(BookBlueprint)
 
     return app
