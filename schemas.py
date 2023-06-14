@@ -18,3 +18,11 @@ class UserSchema(PlainUserSchema):
 class BookSchema(PlainBookSchema):
     users = fields.List(fields.Nested(PlainUserSchema()), many=True, dump_only=True)
 
+class UserAndBookSchema(Schema):
+    # message = fields.Str()
+    # user = fields.Nested(UserSchema)
+    # book = fields.Nested(BookSchema)
+
+    title = fields.Str()
+    author = fields.Str()
+

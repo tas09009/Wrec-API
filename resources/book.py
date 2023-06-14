@@ -7,7 +7,6 @@ import csv
 from db import db
 from models import Book, User
 
-# from models import StoreModel
 from schemas import BookSchema
 from scripts.generate_circle_packing_json import generate_dewey_categories_blueprint
 

@@ -13,13 +13,14 @@ from models.users_books import UsersBooks
 from db import db
 from resources.user import blp as UserBlueprint
 from resources.book import blp as BookBlueprint
+from resources.bookshelf import blp as BookShelfBlueprint
 
 def create_app(db_url=None):
     app = Flask(__name__)
     load_dotenv()
 
     app.config["PROPAGATE_EXCEPTIONS"] = True
-    app.config["API_TITLE"] = "Stores REST API"
+    app.config["API_TITLE"] = "Wrec API"
     app.config["API_VERSION"] = "v1"
     app.config["OPENAPI_VERSION"] = "3.0.3"
     app.config["OPENAPI_URL_PREFIX"] = "/"
@@ -35,5 +36,6 @@ def create_app(db_url=None):
 
     api.register_blueprint(UserBlueprint)
     api.register_blueprint(BookBlueprint)
+    api.register_blueprint(BookShelfBlueprint)
 
     return app

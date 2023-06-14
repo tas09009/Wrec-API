@@ -8,10 +8,4 @@ class Book(db.Model):
     dewey_decimal = db.Column(db.Integer())
     isbn = db.Column(db.String(16))
     users = db.relationship('User', back_populates='books', secondary="users_books", lazy=True, cascade="all, delete")
-    value = 1
-    # users = db.relationship('User', secondary="user_book", back_populates='books', lazy=True)
-
-# user_book = db.Table('user_book',
-#     db.Column('user_id', db.Integer, db.ForeignKey('users.id')),
-#     db.Column('book_id', db.Integer, db.ForeignKey('books.id'))
-# )
+    value = 1 # not being tracked in alembic. Maybe just generate value during circlepacking?
