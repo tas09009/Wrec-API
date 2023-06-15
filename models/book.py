@@ -9,3 +9,5 @@ class Book(db.Model):
     isbn = db.Column(db.String(16))
     users = db.relationship('User', back_populates='books', secondary="users_books", lazy=True, cascade="all, delete")
     value = 1 # not being tracked in alembic. Maybe just generate value during circlepacking?
+
+

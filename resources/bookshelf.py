@@ -1,126 +1,77 @@
-from flask import jsonify
 from flask.views import MethodView
 from flask_smorest import Blueprint
 
-from db import db
-from sqlalchemy import between
-from models import User, DeweyDecimalSystem, DeweyLevel_1, DeweyLevel_2, DeweyLevel_3
-from schemas import PlainBookSchema, BookSchema
+from models import (
+    User,
+    DeweyLevel_1,
+    DeweyLevel_2,
+    DeweyLevel_3,
+)
 
-blp = Blueprint('bookshelf', __name__, description="Circle Packing of User's Books")
+blp = Blueprint("bookshelf", __name__, description="Circle Packing of User's Books")
 
-@blp.route('/bookshelf/user/<int:user_id>')
+
+@blp.route("/bookshelf/user/<int:user_id>")
 class BookShelfView(MethodView):
 
-    # @blp.response(200, PlainBookSchema(many=True))
     def get(self, user_id):
-        populate_nested_structure()
+        bookshelf = create_circle_packing(user_id)
 
-        bookshelf_data = {
-            "name": "Dewey Decimal System",
-            "children": []
+        return bookshelf
+
+
+def create_circle_packing(user_id):
+
+    user = User.query.filter_by(id=user_id).first()
+    bookshelf_data = {"name": "Bookshelf", "children": []}
+
+    ten_categories = DeweyLevel_1.query.all()
+    for ten_category in ten_categories:
+        ten_categories_dict = {
+            "name": ten_category.description,
+            "code": ten_category.code,
+            "value": 4,
+            "children": [],
         }
-        return bookshelf_data
-
-
-#TODO: This will need to go in a flask migration script - dewey_levels.py
-def populate_nested_structure():
-    """
-    nest 100 'HundredCategories' within 10 'TenCategories'
-    nest 100 'ThousandCategories' within 10 'HundredCategories'
-    """
-    start = 1
-    stop = 10
-    hundred_category_id = 1
-    while hundred_category_id <= 100:
-        thousand_categories_subgroup = DeweyLevel_3.query.filter(DeweyLevel_3.id.between(start,stop)).all()
-        for category in thousand_categories_subgroup:
-            category.level_2_id = hundred_category_id
-            db.session.add(category)
-
-        start += 10
-        stop += 10
-        hundred_category_id += 1
-
-
-    start = 1
-    stop = 10
-    ten_category_id = 1
-    while ten_category_id <= 10:
-        hundred_categories_subgroup = DeweyLevel_2.query.filter(DeweyLevel_2.id.between(start,stop)).all()
-        for category in hundred_categories_subgroup:
-            category.level_1_id = ten_category_id
-            db.session.add(category)
-
-        start += 10
-        stop += 10
-        ten_category_id += 1
-
-
-    db.session.commit()
-    return
-
-
-
-
-def generate_dewey_categories_blueprint():
-
-    dewey_decimal_systems = DeweyDecimalSystem.query.all()
-
-    bookshelf_data = {
-        "name": "Dewey Decimal System",
-        "children": []
-    }
-
-    for dewey_decimal_system in dewey_decimal_systems:
-        dewey_data = {
-            "name": "Dewey Decimal System",
-            "children": []
-        }
-
-        for level_1_category in dewey_decimal_system.level_1:
-            level_1_data = {
-                "name": level_1_category.description,
-                "children": []
+        hundred_categories = DeweyLevel_2.query.filter_by(
+            level_1_id=ten_category.id
+        ).all()
+        for hundred_category in hundred_categories:
+            hundred_categories_dict = {
+                "name": hundred_category.description,
+                "code": hundred_category.code,
+                "value": 3,
+                "children": [],
             }
-
-            for level_2_subcategory in level_1_category.level_2:
-                level_2_data = {
-                    "name": level_2_subcategory.description,
-                    "children": []
+            thousand_categories = DeweyLevel_3.query.filter_by(
+                level_2_id=hundred_category.id
+            ).all()
+            for thousand_category in thousand_categories:
+                thousand_categories_dict = {
+                    "name": thousand_category.description,
+                    "code": thousand_category.code,
+                    "level_2_id": thousand_category.level_2_id,
+                    "value": 2,
+                    "children": [],
                 }
 
-                level_1_data["children"].append(level_2_data)
+                # query all user's books in that SPECIFIC dewey decimal category and append
+                books = [
+                    book
+                    for book in user.books
+                    if book.dewey_decimal == thousand_category.code
+                ]
+                if books:
+                    for book in books:
+                        book_dict = {
+                            "title": book.title,
+                            "author": book.author,
+                            "dewey_decimal": book.dewey_decimal,
+                            "value": 1,
+                        }
+                    thousand_categories_dict["children"].append(book_dict)
+                hundred_categories_dict["children"].append(thousand_categories_dict)
+            ten_categories_dict["children"].append(hundred_categories_dict)
+        bookshelf_data["children"].append(ten_categories_dict)
 
-                for level_3_subcategory in level_2_subcategory.level_3:
-                    level_3_data = {
-                        "name": level_3_subcategory.description,
-                        "size": level_3_subcategory.value
-                    }
-
-                    level_2_data["children"].append(level_3_data)
-
-            dewey_data["children"].append(level_1_data)
-
-        bookshelf_data["children"].append(dewey_data)
-
-    return jsonify(bookshelf_data)
-
-
-
-
-
-
-
-def get_users_books(user_id):
-    user = User.query.get_or_404(user_id)
-    user_books = user.books
-    book_schema = PlainBookSchema(many=True)
-    serialized_books = book_schema.dump(user_books)
-
-
-    bookshelf_data = {
-        "name": "Bookshelf",
-        "children":serialized_books,
-    }
-    return jsonify(bookshelf_data)
+    return bookshelf_data
