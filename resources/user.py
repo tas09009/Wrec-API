@@ -1,14 +1,19 @@
-import csv
-import io
-from flask import request
+"""
+[x] Save CSV file using Amazon login
+[x] Encapsulate all logic into functions
+[x] Log into Goodreads and download a csv file
+"""
+
+from flask import redirect, url_for
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
-from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 from db import db
 from models import User, Book
 from schemas import UserSchema
+from goodreads_scrape import get_login_links, sign_in, transfer_session, export_book
+
 
 blp = Blueprint("Users", __name__, description="Operations on users")
 
@@ -21,7 +26,6 @@ class UserView(MethodView):
         user = User.query.get_or_404(user_id)
         return user
 
-    #TODO
     def delete(self, user_id):
         user = User.query.get_or_404(user_id)
         db.session.delete(user)
@@ -66,22 +70,31 @@ class LinkBooktoUser(MethodView):
         return user
 
 
-#TODO
-# @blp.route('/users/<int:user_id>/books')
-# def post():
-#     with open("goodreadsKirstenKorevaar_sample.csv") as csv_file:
-#         reader = csv.DictReader(csv_file)
+@blp.route('/login')
+class UserLogin(MethodView):
 
-#         for row in reader:
-#             book = Book(
-#                 title=row['Title'],
-#                 author=row['Author'],
-#                 isbn=row['ISBN'],
-#                 value=1,
-#                 user_id=user.id
-#             )
-#             db.session.add(book)
-#             db.session.commit()
+    @blp.arguments(UserSchema, location="json") # Update the user schema to accept password
+    def post(self, user_data):
+        buttons, browser = get_login_links()
+        user_id, user = sign_in(buttons, browser, user_data)
 
-#     print("Successfully uploaded all books")
-#     return {"message": "Successfully uploaded all books"}
+        # Sign in
+        user = User.query.filter_by(email=user_data["email"]).first()
+        if not user:
+            new_user = User(email=user_data["email"], name=user_data["name"]) # Should be user = User(**user_data)
+            try:
+                db.session.add(new_user)
+                db.session.commit()
+            except IntegrityError:
+                abort(400, message="User with that name already exists")
+            except SQLAlchemyError as e:
+                abort(500, message=str(e))
+
+        session = transfer_session(browser)
+        export_book(session, user_id, user)
+
+        # TODO: populate dewey decimal values for all the books uploaded
+
+        user_redirect = user or new_user
+        return redirect(url_for("blp.bookshelf", user_id=user_redirect.id))
+        # return {"message": f"Successfully downloaded all books into a csv_file for user_id: {user_id}", "redirect link": f"/bookshelf/user/<int:user_id>"}

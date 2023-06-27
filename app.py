@@ -5,6 +5,7 @@ from flask_smorest import Api
 from flask_migrate import Migrate
 from flask_cors import CORS
 from dotenv import load_dotenv
+from flask_dance.consumer import OAuth2ConsumerBlueprint
 
 import models
 from models.users_books import UsersBooks
@@ -12,8 +13,10 @@ from models.users_books import UsersBooks
 
 from db import db
 from resources.user import blp as UserBlueprint
+from resources.auth import blp as AuthBlueprint
 from resources.book import blp as BookBlueprint
 from resources.bookshelf import blp as BookShelfBlueprint
+
 
 def create_app(db_url=None):
     app = Flask(__name__)
@@ -30,6 +33,7 @@ def create_app(db_url=None):
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     CORS(app)
     db.init_app(app) # connects app to SQLalchemy
+    app.secret_key = "my_secret_key"
 
     migrate = Migrate(app, db)
     api = Api(app)
@@ -37,5 +41,7 @@ def create_app(db_url=None):
     api.register_blueprint(UserBlueprint)
     api.register_blueprint(BookBlueprint)
     api.register_blueprint(BookShelfBlueprint)
+    api.register_blueprint(AuthBlueprint, url_prefix="/login")
+    # api.add_resource(UserLogin, "/users/login", resource_class_kwargs={"amazon_blueprint": amazon_blueprint})
 
     return app

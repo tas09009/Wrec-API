@@ -6,3 +6,6 @@ __pycache__
 data.db
 *.pyc
 .DS_Store
+
+# selenium logs
+geckodriver.log
