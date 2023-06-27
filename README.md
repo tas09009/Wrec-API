@@ -1,7 +1,7 @@
 # Wrec-API
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
-Visualize your book consumption using the dewey decimal system to find your reading biases.
+Visualize your book consumption and reading biases using the dewey decimal system.
 ## Table of Contents
 - [Background](#background)
 - [Install](#install)
@@ -12,36 +12,45 @@ Visualize your book consumption using the dewey decimal system to find your read
 
 
 ## Background
-This idea started off with the "unknown unknowns" when it comes to consuming things like books, music and movies. Every recommendation system is trying to keep you within your bubble of interests but we want to try something our of your consumption bubble. Here is an example:
+A data visualization on books you've read may look something like the image on the left - assuming the orange circles represent books. However I want to see the book genres I'm NOT reading, so ideally it'll look like something on the right.
 
 ![circlepacking_before_after](media/circlepacking_before_after.png)
-*The visualization on the left shows what most data visualization charts will show: what you read and how much. The visualization on the right also shows what you DON'T read, represented here by gray circles*
+The purpose of this project is to compare a user's book classifications to the total available classifications. One option for this is to use the Dewey Decimal System and nesting the three levels of categories:
 
-The purpose of this project is to compare a user's book classifications to the total available classifications. One way this is done is by using the Dewey Decimal System.
+```
+Level 1: 10 categories
+Level 2: 100 categories
+Level 3: 1000 categories
+```
 
 [D3 Zoomable Circle Packing Visualization](http://jeromefroe.github.io/circlepackeR/) makes it easy to show nested dewey decimal categories and a user's corresponding books by using this [JSON structure](https://gist.githubusercontent.com/mbostock/1093025/raw/05621a578a66fba4d2cbf5a77e2d1bb3a27ac3d4/flare.json). See [API Endpoints](#api-endpoints) section below to render a circle packing json.
 
+API stack:
+- Flask
+- PostGreSQL - hosted on ElephantSQL
+- Deployed - docker image on Render
 
-This project uses the Flask framework for designing the API, PostgreSQL as the database and Heroku for deployment.
+This project was inspired by Neil Pasricha's blog post [8 More Ways To Read (A Lot) More Books](https://www.neil.blog/articles/8-more-ways-to-read-a-lot-more-books#yui_3_17_2_1_1687286122789_289) and partially by Morgan Housel's blog post [How to Read: Lots of Inputs and a Strong Filter ](https://collabfund.com/blog/how-to-read-lots-of-inputs-and-a-strong-filter/).
 
+
+I would love extend this idea to music and movies too!
 ## Install
-1. You can either clone the project by running`git clone https://github.com/singhshemona/recommmend.git` in your terminal or fork the project in order to contribute later: See [Contributing](#contributing) below.
 
+1. You can either clone the project by running`git clone https://github.com/tas09009/Wrec-API.git` in your terminal or fork the project in order to contribute later: See [Contributing](#contributing) below.
+
+#TODO: This all needs to be updated
 1. Set up your Python virtual environment by running `pyvenv venv` in that directory and running `source venv/bin/activate` to active it. Or create a conda environment.
 2. make sure `pip` is installed
 3. Install Python requirements with `pip install -r requirements.txt`. You may need to install some [build prerequisites](https://www.psycopg.org/docs/install.html#build-prerequisites); on Debian-like systems, they include the packages `python3-dev` and `libpq-dev`. You can try running `pip install psycopg2-binary` first to see if that solves the issue.
 4. Install PostgreSQL and create an empty database by running `createdb wrec` in your terminal
-5. Create the models by running `flask db upgrade` in your terminal
+5. Create the models by running `flask db upgrade` in your terminal. The migration scripts in here will create three models of the dewey decimal levels.
 7. At your terminal run `flask run`. Click on development server shown in your terminal [http://127.0.0.1:5000/](http://127.0.0.1:5000/)
-8. Then go to each of the following endpoints to upload the tens, hundreds and thousands csv files. The csv files are located in the `/app/externalFiles/DDS_directory_structure`. The corresponding file needs to be uploaded at it's respective endpoint:
-	- DDSGORun0.csv > `/category/ten/upload`
-	- DDSGORun1.csv > `/category/hundred/upload`
-	- DDSGORun2.csv > `/category/thousand/upload`
 
 *Here are some files which you may find helpful when diving into the project:*
 - `wrec-schema.jpg` - diagram of all the models
 - `classify_api_flowchart.jpg` - This project utilizes the [Classify API](http://classify.oclc.org/classify2/api_docs/index.html) to convert ISBN values to their respective dewey decimal numbers. However, the process isn't straightforward as the API actually returns an XML document of that particular book's data. The XML is converted to JSON, then parsed to find the dewey number value. This process isn't standard hence, a flowchart of the algorithm needed to be created to clarify the steps. There are still some methods missing which need to be added to the flowchart. Here is a snippet of the flowchart:
 ![classify_api_snippet](./backend_flask/classify_api_snippet.jpg)
+
 ## Environment variables
 Create a `.env` file at the project level and add the following:
 
@@ -55,7 +64,7 @@ Create a `.env` file at the project level and add the following:
 Documentation will be created in [Swagger](https://swagger.io/). For now, here is a quick guide:
 
 User Navigation
-- Registration - *need to implement* 
+- Registration - *need to implement*
 
 	For now use:
 	- email=`john@example.com`
