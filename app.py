@@ -5,11 +5,6 @@ from flask_smorest import Api
 from flask_migrate import Migrate
 from flask_cors import CORS
 from dotenv import load_dotenv
-from flask_dance.consumer import OAuth2ConsumerBlueprint
-
-import models
-from models.users_books import UsersBooks
-
 
 from db import db
 from resources.user import blp as UserBlueprint
@@ -32,9 +27,8 @@ def create_app(db_url=None):
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url or os.getenv("DATABASE_URL", "sqlite:///data.db")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     CORS(app)
-    db.init_app(app) # connects app to SQLalchemy
-    app.secret_key = "my_secret_key"
 
+    db.init_app(app) # connects app to SQLalchemy
     migrate = Migrate(app, db)
     api = Api(app)
 
@@ -42,6 +36,5 @@ def create_app(db_url=None):
     api.register_blueprint(BookBlueprint)
     api.register_blueprint(BookShelfBlueprint)
     api.register_blueprint(AuthBlueprint, url_prefix="/login")
-    # api.add_resource(UserLogin, "/users/login", resource_class_kwargs={"amazon_blueprint": amazon_blueprint})
 
     return app

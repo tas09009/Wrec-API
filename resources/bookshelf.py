@@ -1,5 +1,6 @@
 from flask.views import MethodView
 from flask_smorest import Blueprint
+# from cache import cache
 
 from models import (
     User,
@@ -14,6 +15,7 @@ blp = Blueprint("bookshelf", __name__, description="Circle Packing of User's Boo
 @blp.route("/bookshelf/user/<int:user_id>")
 class BookShelfView(MethodView):
 
+    # @cache.cached()
     def get(self, user_id):
         bookshelf = create_circle_packing(user_id)
 
