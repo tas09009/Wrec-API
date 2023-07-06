@@ -34,7 +34,7 @@ def create_app(db_url=None):
 
     api.register_blueprint(UserBlueprint)
     api.register_blueprint(BookBlueprint)
-    api.register_blueprint(BookShelfBlueprint)
+    api.register_blueprint(BookShelfBlueprint, url_prefix="/bookshelf")
     api.register_blueprint(AuthBlueprint, url_prefix="/login")
 
     return app

@@ -2,22 +2,21 @@
 Export User's books
 """
 
-import requests
-
-# from bs4 import BeautifulSoup
 import re
 from lxml import html
 import csv
 import time
 from io import StringIO
 from flask import abort
+import requests
 
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import NoSuchElementException
 
-from models import Book, User
+from models import Book
 from db import db
 from classify_api_scrape import get_dewey_value_scrape
 
@@ -78,7 +77,7 @@ def amazon_sign_in(login_buttons, button_idx, browser, user_data):
     email_input.send_keys(user_data["email"])
     password_input.send_keys(user_data["password"])
     time.sleep(3)
-    submit_button = browser.find_element(By.XPATH, '//input[@id="signInSubmit"]')[2]
+    submit_button = browser.find_element(By.XPATH, '//input[@id="signInSubmit"]')
     submit_button.send_keys(Keys.ENTER)
     return get_user_id(browser)
 
@@ -142,14 +141,17 @@ def get_user_id(browser):
     return user_id, browser
 
 def check_for_popups(browser):
-    if browser.find_element(By.XPATH, '//*[contains(text(), "been a while since you logged into")]'):
-        browser.find_element(By.XPATH, '//span[text()="Continue"]').click()
-    if browser.find_element(By.XPATH, '//div[@class="right"]/h1/text()'):
-        abort(500, message="Goodreads is down for maintenance.")
-    if browser.find_element(By.XPATH, '//*[contains(text(), "This Apple ID has been locked for security reasons")]'):
-        abort(500, message="This Apple ID has been locked for security reasons")
-    if browser.find_element(By.XPATH, '//*[contains(text(), "To better protect your account, please re-enter your")]'):
-        abort(500, message="Your password needs verification on goodread's website. Please log into Goodreads first on another browser.")
+    try:
+        if browser.find_element(By.XPATH, '//*[contains(text(), "been a while since you logged into")]'):
+            browser.find_element(By.XPATH, '//span[text()="Continue"]').click()
+        if browser.find_element(By.XPATH, '//div[@class="right"]/h1/text()'):
+            abort(500, message="Goodreads is down for maintenance.")
+        if browser.find_element(By.XPATH, '//*[contains(text(), "This Apple ID has been locked for security reasons")]'):
+            abort(500, message="This Apple ID has been locked for security reasons")
+        if browser.find_element(By.XPATH, '//*[contains(text(), "To better protect your account, please re-enter your")]'):
+            abort(500, message="Your password needs verification on goodread's website. Please log into Goodreads first on another browser.")
+    except NoSuchElementException:
+        pass
 
 def transfer_session(browser):
 # Transfer selenium.webdriver to requests.session
