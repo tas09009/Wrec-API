@@ -33,6 +33,14 @@ class BookView(MethodView):
             abort(500, message="An error occured while inserting the book")
         return book
 
+@blp.route("/book/<int:book_id>")
+class BookView(MethodView):
+
+    @blp.response(200, BookSchema(many=True))
+    def get(self, book_id):
+        book = Book.query.get_or_404(book_id)
+        return book
+
 @blp.route('/upload_sample')
 class UserBooks(MethodView):
     blp.response(200)

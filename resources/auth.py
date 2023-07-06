@@ -97,7 +97,7 @@ def finish_login(user_id, user_data, browser):
     name = user_data.get("name")
     user = User.query.filter_by(email=email).first()
     if user:
-        return redirect(url_for("bookshelf.BookShelfView", user_id=user.id))
+        return redirect(url_for("bookshelf.LinearBookShelfView", user_id=user.id))
 
     new_user = User(
         email=email, name=name
@@ -112,7 +112,7 @@ def finish_login(user_id, user_data, browser):
 
     session = transfer_session(browser)
     export_book(session, user_id, new_user)
-    return redirect(url_for("bookshelf.BookShelfView", user_id=new_user.id))
+    return redirect(url_for("bookshelf.LinearBookShelfView", user_id=new_user.id))
 
 
 

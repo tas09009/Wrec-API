@@ -1,6 +1,7 @@
 from flask.views import MethodView
 from flask_smorest import Blueprint
 from flask import jsonify, redirect, url_for
+import math
 
 from models import (
     User,
@@ -17,22 +18,12 @@ blp = Blueprint("bookshelf", __name__, description="Circle Packing of User's Boo
 class BookShelfView(MethodView):
 
     def get(self, user_id):
-        # bookshelf_options = {
-        #     "circle- packing": {"url": f"circlepacking/user/{user_id}"},
-        #     "linear bookshelf": {"url": f"linear-bookshelf/user/{user_id}"},
-        # }
-
-        # bookshelf_options = {
-        #     "circle-packing": {"url": current_app.api.url_for(self, user_id=user_id, _external=True)},
-        #     "linear-bookshelf": {"url": current_app.api.url_for(self, user_id=user_id, _external=True)},
-        # }
         bookshelf_options = {
             "circle-packing": {"url": url_for("bookshelf.CirclePackingView", user_id=user_id, _external=True)},
             "linear-bookshelf": {"url": url_for("bookshelf.LinearBookShelfView", user_id=user_id, _external=True)},
         }
-        # return redirect(url_for("bookshelf.BookShelfView", user_id=user.id))
+        return bookshelf_options
 
-        return jsonify(bookshelf_options)
 
 @blp.route("linear-bookshelf/user/<int:user_id>")
 class LinearBookShelfView(MethodView):
@@ -41,13 +32,114 @@ class LinearBookShelfView(MethodView):
     @blp.doc(description="Get the linear bookshelf for a user")
     def get(self, user_id):
         user = User.query.filter_by(id=user_id).first()
-        # books = user.books.order_by(Book.dewey_decimal.asc()).all()
-        books = sorted(user.books, key=lambda book: book.dewey_decimal)
+        user_books = []
+        for book in user.books:
+            book_info = {
+                "title": book.title,
+                "author": book.author,
+                "dewey_decimal": book.dewey_decimal,
+            }
+            user_books.append(book_info)
 
-        serialized_books = [book.serialize() for book in books]
-        return jsonify(serialized_books)
-        return jsonify(books)
-        return [book.serialize() for book in books]
+        user_books_sorted = sorted(user_books, key=lambda book: book["dewey_decimal"])
+        return user_books_sorted
+
+@blp.route("linear-bookshelf/level_1/user/<int:user_id>")
+class LinearBookShelfViewLevel1(MethodView):
+
+    @blp.response(200)
+    @blp.doc(description="Get the linear bookshelf for a user: Level 1")
+    def get(self, user_id):
+        user = User.query.filter_by(id=user_id).first()
+        user_books = []
+        levels = DeweyLevel_1.query.all()
+        for level in levels:
+            level_info = {
+                "code": level.code,
+                "description": level.description,
+                "books": []
+            }
+            unsorted_books = []
+            for book in user.books:
+                book_code = get_level_1_info(book)
+                if book_code == level.code:
+                    book_info = {
+                        "title": book.title,
+                        "author": book.author,
+                        "dewey_decimal": book.dewey_decimal,
+                    }
+                    unsorted_books.append(book_info)
+            user_books_sorted = sorted(unsorted_books, key=lambda book_info: book_info["dewey_decimal"])
+            level_info["books"].append(user_books_sorted)
+            user_books.append(level_info)
+
+        return user_books
+
+
+@blp.route("linear-bookshelf/level_2/user/<int:user_id>")
+class LinearBookShelfViewLevel2(MethodView):
+
+    @blp.response(200)
+    @blp.doc(description="Get the linear bookshelf for a user: Level 2")
+    def get(self, user_id):
+        user = User.query.filter_by(id=user_id).first()
+        user_books = []
+        levels = DeweyLevel_2.query.all()
+        for level in levels:
+            level_info = {
+                "code": level.code,
+                "description": level.description,
+                "books": []
+            }
+            unsorted_books = []
+            for book in user.books:
+                book_code = get_level_2_info(book)
+                if book_code == level.code:
+                    book_info = {
+                        "title": book.title,
+                        "author": book.author,
+                        "dewey_decimal": book.dewey_decimal,
+                    }
+                    unsorted_books.append(book_info)
+            user_books_sorted = sorted(unsorted_books, key=lambda book_info: book_info["dewey_decimal"])
+            level_info["books"].append(user_books_sorted)
+            user_books.append(level_info)
+            user_books_total_sorted = sorted(user_books, key=lambda level: level["code"])
+
+        return user_books_total_sorted
+
+
+@blp.route("linear-bookshelf/level_3/user/<int:user_id>")
+class LinearBookShelfViewLevel3(MethodView):
+
+    @blp.response(200)
+    @blp.doc(description="Get the linear bookshelf for a user: Level 3")
+    def get(self, user_id):
+        user = User.query.filter_by(id=user_id).first()
+        user_books = []
+        levels = DeweyLevel_3.query.all()
+        for level in levels:
+            level_info = {
+                "code": level.code,
+                "description": level.description,
+                "books": []
+            }
+            unsorted_books = []
+            for book in user.books:
+                # book_code = get_level_2_info(book)
+                if book.dewey_decimal == level.code:
+                    book_info = {
+                        "title": book.title,
+                        "author": book.author,
+                        "dewey_decimal": book.dewey_decimal,
+                    }
+                    unsorted_books.append(book_info)
+            user_books_sorted = sorted(unsorted_books, key=lambda book_info: book_info["dewey_decimal"])
+            level_info["books"].append(user_books_sorted)
+            user_books.append(level_info)
+            user_books_total_sorted = sorted(user_books, key=lambda level: level["code"])
+
+        return user_books_total_sorted
 
 
 @blp.route("circlepacking/user/<int:user_id>")
@@ -114,3 +206,17 @@ def create_circle_packing(user_id):
         bookshelf_data["children"].append(ten_categories_dict)
 
     return bookshelf_data
+
+def get_level_1_info(book):
+    value = float(book.dewey_decimal)
+    book_level_1_value = math.floor(value/100.0) * 100
+    # level_1 = DeweyLevel_1.query.filter_by(code=book_level_1_value).first()
+    return book_level_1_value #, level_1.description
+def get_level_2_info(book):
+    value = float(book.dewey_decimal)
+    book_level_2_value = math.floor(value/10.0) * 10
+    return book_level_2_value #, level_1.description
+# def get_level_3_info(book):
+#     value = float(book.dewey_decimal)
+#     book_level_1_value = math.floor(value/100.0) * 100
+#     return book_level_1_value #, level_1.description
