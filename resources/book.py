@@ -3,12 +3,10 @@ from flask_smorest import Blueprint, abort
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 
-import csv
 from db import db
-from models import Book, User
+from models import Book
 
 from schemas import BookSchema
-from scripts.generate_circle_packing_json import generate_dewey_categories_blueprint
 
 blp = Blueprint("books", __name__, description="Operations on books")
 
