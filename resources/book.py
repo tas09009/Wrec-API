@@ -36,33 +36,14 @@ class BookView(MethodView):
 @blp.route("/book/<int:book_id>")
 class BookView(MethodView):
 
-    @blp.response(200, BookSchema(many=True))
+    @blp.response(200, BookSchema)
     def get(self, book_id):
         book = Book.query.get_or_404(book_id)
         return book
 
-@blp.route('/upload_sample')
-class UserBooks(MethodView):
-    blp.response(200)
-    def get():
-        kristen = User.query.filter_by(name="kristen").first()
-        if not kristen:
-            kristen = User(name='kristen')
-            db.session.add(kristen)
-            db.session.commit()
-        with open("goodreadsKirstenKorevaar_sample.csv") as csv_file:
-            reader = csv.DictReader(csv_file)
+    def delete(self, book_id):
+        book = Book.query.get_or_404(book_id)
+        db.session.delete(book)
+        db.session.commit()
+        return {"message": f"Book id {book.id} (title: {book.title}) deleted"}
 
-            for row in reader:
-                book = Book(
-                    title=row['Title'],
-                    author=row['Author'],
-                    isbn=row['ISBN'],
-                    value=1,
-                    user_d=kristen.id
-                )
-                db.session.add(book)
-                db.session.commit()
-
-        print("Successfully uploaded all books")
-        return {"message": "Successfully uploaded all books"}

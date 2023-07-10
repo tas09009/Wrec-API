@@ -29,8 +29,8 @@ class UserLogin(MethodView):
 @blp.route("/facebook")
 class UserLoginFacebook(MethodView):
     @blp.arguments(
-        UserSchema, location="json" # data will be in json, not url
-    )  # Update the user schema to accept password
+        UserSchema, location="json"
+    )
     def post(self, user_data):
         login_buttons, browser = get_login_links()
 
@@ -42,8 +42,8 @@ class UserLoginFacebook(MethodView):
 @blp.route("/amazon")
 class UserLoginAmazon(MethodView):
     @blp.arguments(
-        UserSchema, location="json" # data will be in json, not url
-    )  # Update the user schema to accept password
+        UserSchema, location="json"
+    )
     def post(self, user_data):
         login_buttons, browser = get_login_links()
 
@@ -55,8 +55,8 @@ class UserLoginAmazon(MethodView):
 @blp.route("/apple")
 class UserLoginApple(MethodView):
     @blp.arguments(
-        UserSchema, location="json" # data will be in json, not url
-    )  # Update the user schema to accept password
+        UserSchema, location="json"
+    )
     def post(self, user_data):
         login_buttons, browser = get_login_links()
 
@@ -68,8 +68,8 @@ class UserLoginApple(MethodView):
 @blp.route("/google")
 class UserLoginGoogle(MethodView):
     @blp.arguments(
-        UserSchema, location="json" # data will be in json, not url
-    )  # Update the user schema to accept password
+        UserSchema, location="json"
+    )
     def post(self, user_data):
         login_buttons, browser = get_login_links()
 
@@ -81,8 +81,8 @@ class UserLoginGoogle(MethodView):
 @blp.route("/goodreads_email")
 class UserLoginGoodReads(MethodView):
     @blp.arguments(
-        UserSchema, location="json" # data will be in json, not url
-    )  # Update the user schema to accept password
+        UserSchema, location="json"
+    )
     def post(self, user_data):
         login_buttons, browser = get_login_links()
 
@@ -91,9 +91,8 @@ class UserLoginGoodReads(MethodView):
         user_id, browser = goodreads_sign_in(login_buttons, button_idx, browser, user_data)
         return finish_login(user_id, user_data, browser)
 
-def finish_login(user_id, user_data, browser):
+def finish_login(user_id, user_data, browser): #[ ] user_id here is for goodreads, not User
     email = user_data.get("email")
-    # password = user_data.get("password")
     name = user_data.get("name")
     user = User.query.filter_by(email=email).first()
     if user:
@@ -113,68 +112,3 @@ def finish_login(user_id, user_data, browser):
     session = transfer_session(browser)
     export_book(session, user_id, new_user)
     return redirect(url_for("bookshelf.LinearBookShelfView", user_id=new_user.id))
-
-
-
-# -------------------------------------------------------------------------
-# from flask_dance.consumer import OAuth2ConsumerBlueprint, oauth_authorized, oauth_error
-# from flask_smorest import Blueprint, abort
-# from flask.views import MethodView
-# import requests
-
-
-# # Amazon OAuth configuration
-# client_id = "amzn1.application-oa2-client.c7cf91a7a14e4617b2219160850b0ee2"
-# client_secret = "amzn1.oa2-cs.v1.ecf9473f1ba98315a023e2e24dcef03fe0f3850bcfa89abe22b40a9b4c1d17f9"
-# authorization_url = "https://www.amazon.com/ap/oa"
-# token_url = "https://api.amazon.com/auth/o2/token"
-# redirect_url = "https://127.0.0.1:5001/token"
-
-# amazon_blueprint = OAuth2ConsumerBlueprint(
-#     "amazon",
-#     __name__,
-#     client_id=client_id,
-#     client_secret=client_secret,
-#     authorization_url=authorization_url,
-#     token_url=token_url,
-#     redirect_url=redirect_url,
-#     scope=["profile"],
-#     response_type=["code"],
-#     # "scope": "profile",
-#     # authorization_kwargs={"response_type": "code"},
-# )
-
-# blp = Blueprint("UsersLogin", __name__, description="Authenticate users")
-
-# amazon_params = {
-#     "client_id": client_id,
-#     "scope": "profile",
-#     "response_type": "code",
-#     "redirect_uri": redirect_url,
-# }
-# # amazon_auth_str = authorization_url + urlencode(amazon_params)
-# amazon_auth_str = f"{authorization_url}?client_id={client_id}&scope=profile&response_type=code&redirect_uri={redirect_url}"
-
-
-# @blp.route("/callback")
-# class AmazonCallbackResource(MethodView):
-
-#     # @blp.response(200, "Success")
-#     def get(self):
-#         if not amazon_blueprint.session.authorized:
-#             abort(401, message="Authorization failed.")
-
-#         # Get the access token using the authorization code
-#         amazon_blueprint.session.fetch_token(
-#             token_url=token_url,
-#             authorization_response=requests.request.url,
-#         )
-
-#         # Make a request to the user profile endpoint
-#         response = amazon_blueprint.session.get("/user/profile")
-#         if response.ok:
-#             profile_data = response.json()
-#             return profile_data
-#         else:
-#             abort(500, message="Failed to retrieve user profile.")
-

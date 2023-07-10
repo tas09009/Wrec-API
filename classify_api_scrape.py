@@ -30,7 +30,7 @@ def get_dewey_value_scrape(isbn=None, title=None, author=None):
         ddc_class_number = tree.xpath(DEWEY_VALUE_XPATH)[0]
         try:
             return int(float(ddc_class_number))
-        except ValueError: # [ ] log the book
+        except ValueError:
             pass
 
     # title and author
@@ -44,7 +44,7 @@ def get_dewey_value_scrape(isbn=None, title=None, author=None):
         ddc_class_number = tree.xpath(DEWEY_VALUE_XPATH)[0]
         try:
             return int(float(ddc_class_number))
-        except ValueError: # [ ] log the book
+        except ValueError:
             pass
 
     return None
