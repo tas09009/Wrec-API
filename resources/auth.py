@@ -19,11 +19,19 @@ login_options = {
     "goodreads" : {"lable": "Sign in with Goodreads Email", "url": "/login/goodreads_email", "button_value" : 3},
 }
 
+
 @blp.route("/")
 class UserLogin(MethodView):
 
     def get(self):
         return jsonify(login_options)
+
+
+@blp.route("/logout")
+class UserLogin(MethodView):
+
+    def get(self):
+        return {"message": "You are now logged out"}
 
 
 @blp.route("/facebook")

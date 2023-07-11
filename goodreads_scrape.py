@@ -2,6 +2,7 @@
 Export User's books
 """
 
+import os
 import re
 import logging
 from lxml import html
@@ -74,12 +75,25 @@ def get_login_links():
     # TODO: Add proxies since you can't pass headers into selenium:
     # https://stackoverflow.com/questions/15645093/setting-request-headers-in-selenium
 
-    firefox_options = Options()
-    firefox_binary = FirefoxBinary()
-    firefox_options.add_argument("--headless")
-    firefox_options.add_argument("--disable-dev-shm-usage")
+    BROWSERLESS_API_KEY = os.getenv("BROWSERLESS_API_TOKEN")
+    ENVIRONMENT_KEY = os.getenv("FLASK_ENV")
+    if ENVIRONMENT_KEY == "production":
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.set_capability('browserless:token', BROWSERLESS_API_KEY)
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--headless")
 
-    browser = webdriver.Firefox(firefox_binary=firefox_binary, options=firefox_options)
+        browser = webdriver.Remote(
+            command_executor='https://chrome.browserless.io/webdriver',
+            options=chrome_options
+        )
+
+    elif ENVIRONMENT_KEY == "development":
+        firefox_options = Options()
+        firefox_options.add_argument("--headless")
+        firefox_options.add_argument("--disable-dev-shm-usage")
+        browser = webdriver.Firefox(options=firefox_options)
+
     browser.get("https://www.goodreads.com/user/sign_in")
     login_buttons = browser.find_elements(By.XPATH, "//button")
     return login_buttons, browser
