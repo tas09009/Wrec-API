@@ -13,6 +13,7 @@ import requests
 
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
@@ -72,11 +73,13 @@ def get_login_links():
     """
     # TODO: Add proxies since you can't pass headers into selenium:
     # https://stackoverflow.com/questions/15645093/setting-request-headers-in-selenium
+
     firefox_options = Options()
+    firefox_binary = FirefoxBinary()
     firefox_options.add_argument("--headless")
     firefox_options.add_argument("--disable-dev-shm-usage")
 
-    browser = webdriver.Firefox(options=firefox_options)
+    browser = webdriver.Firefox(firefox_binary=firefox_binary, options=firefox_options)
     browser.get("https://www.goodreads.com/user/sign_in")
     login_buttons = browser.find_elements(By.XPATH, "//button")
     return login_buttons, browser
