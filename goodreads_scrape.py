@@ -76,8 +76,9 @@ def get_login_links():
     # https://stackoverflow.com/questions/15645093/setting-request-headers-in-selenium
 
     BROWSERLESS_API_KEY = os.getenv("BROWSERLESS_API_TOKEN")
-    ENVIRONMENT_KEY = os.getenv("FLASK_ENV")
-    if ENVIRONMENT_KEY == "production":
+    ENVIRONMENT_KEY = os.getenv("FLASK_DEBUG")
+    # Production
+    if not ENVIRONMENT_KEY:
         chrome_options = webdriver.ChromeOptions()
         chrome_options.set_capability('browserless:token', BROWSERLESS_API_KEY)
         chrome_options.add_argument("--no-sandbox")
@@ -88,7 +89,8 @@ def get_login_links():
             options=chrome_options
         )
 
-    elif ENVIRONMENT_KEY == "development":
+    # Development
+    elif ENVIRONMENT_KEY == 1:
         firefox_options = Options()
         firefox_options.add_argument("--headless")
         firefox_options.add_argument("--disable-dev-shm-usage")
