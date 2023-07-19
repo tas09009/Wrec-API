@@ -13,8 +13,7 @@ from flask import abort
 import requests
 
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
@@ -69,32 +68,14 @@ headers_export = {
 
 
 def get_login_links():
+    PAGE_TIMEOUT_SECONDS = 120000
     """
     User selected their login type (Amazon, Facebook, etc.)
     """
-    # TODO: Add proxies since you can't pass headers into selenium:
-    # https://stackoverflow.com/questions/15645093/setting-request-headers-in-selenium
-
-    BROWSERLESS_API_KEY = os.getenv("BROWSERLESS_API_TOKEN")
-    ENVIRONMENT_KEY = os.getenv("FLASK_DEBUG")
-    # Production
-    if not ENVIRONMENT_KEY:
-        chrome_options = webdriver.ChromeOptions()
-        chrome_options.set_capability('browserless:token', BROWSERLESS_API_KEY)
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--headless")
-
-        browser = webdriver.Remote(
-            command_executor='https://chrome.browserless.io/webdriver',
-            options=chrome_options
-        )
-
-    # Development
-    elif ENVIRONMENT_KEY == 1:
-        firefox_options = Options()
-        firefox_options.add_argument("--headless")
-        firefox_options.add_argument("--disable-dev-shm-usage")
-        browser = webdriver.Firefox(options=firefox_options)
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    browser = webdriver.Chrome(options=chrome_options)
 
     browser.get("https://www.goodreads.com/user/sign_in")
     login_buttons = browser.find_elements(By.XPATH, "//button")
@@ -108,7 +89,7 @@ def facebook_sign_in(login_buttons, button_idx, browser, user_data):
     time.sleep(3)
     email_input = browser.find_element(
         By.XPATH, '//input[@id="email"]'
-    )  # TODO: email/phone number. If not in database, add
+    )
     password_input = browser.find_element(By.XPATH, '//*[@id="pass"]')
     time.sleep(2)
     email_input.send_keys(user_data["email"])
@@ -120,18 +101,14 @@ def facebook_sign_in(login_buttons, button_idx, browser, user_data):
 
 
 def amazon_sign_in(login_buttons, button_idx, browser, user_data):
-    time.sleep(3)
     amazon_signin_button = login_buttons[button_idx]
     amazon_signin_button.click()
-    time.sleep(3)
     email_input = browser.find_element(
         By.XPATH, '//input[@id="ap_email"]'
-    )  # TODO: email/phone number. If not in database, add
+    )
     password_input = browser.find_element(By.XPATH, '//input[@id="ap_password"]')
-    time.sleep(2)
     email_input.send_keys(user_data["email"])
     password_input.send_keys(user_data["password"])
-    time.sleep(3)
     submit_button = browser.find_element(By.XPATH, '//input[@id="signInSubmit"]')
     submit_button.send_keys(Keys.ENTER)
     return get_user_id(browser)
@@ -144,7 +121,7 @@ def google_sign_in(login_buttons, button_idx, browser, user_data):
     time.sleep(3)
     email_input = browser.find_element(
         By.XPATH, '//input[@aria-label="Email or phone"]'
-    )  # TODO: email/phone number. If not in database, add
+    )
     time.sleep(2)
     email_input.send_keys(user_data["email"])
     next_button = browser.find_element(By.XPATH, '//button[@jsname="LgbsSe"]')
@@ -165,7 +142,7 @@ def apple_sign_in(login_buttons, button_idx, browser, user_data):
     time.sleep(3)
     email_input = browser.find_element(
         By.XPATH, '//input[@id="account_name_text_field"]'
-    )  # TODO: email/phone number. If not in database, add
+    )
     time.sleep(2)
     email_input.send_keys(user_data["email"])
     next_button = browser.find_element(By.XPATH, '//button[@aria-label="Continue"]')
@@ -188,7 +165,7 @@ def goodreads_sign_in(login_buttons, button_idx, browser, user_data):
     time.sleep(3)
     email_input = browser.find_element(
         By.XPATH, '//input[@id="ap_email"]'
-    )  # TODO: email/phone number. If not in database, add
+    )
     password_input = browser.find_element(By.XPATH, '//input[@id="ap_password"]')
     time.sleep(2)
     email_input.send_keys(user_data["email"])
@@ -200,10 +177,8 @@ def goodreads_sign_in(login_buttons, button_idx, browser, user_data):
 
 
 def get_user_id(browser):
-    time.sleep(7)
     check_for_popups(browser)
     tree = html.fromstring(browser.page_source)
-    time.sleep(1)
     my_books = tree.xpath('//a[contains(text(), "My Books")]')[0].get("href")
     user_id = "".join(re.findall("\d", my_books))
     return user_id, browser

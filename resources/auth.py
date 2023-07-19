@@ -12,11 +12,11 @@ from goodreads_scrape import amazon_sign_in, facebook_sign_in, google_sign_in, a
 blp = Blueprint("Auth", __name__, description="Operations on Authentication")
 
 login_options = {
-    "facebook" : {"lable": "Sign in with Facebook", "url": "/login/facebook", "button_value" : 0},
-    "amazon" : {"lable": "Sign in with Amazon", "url": "/login/amazon", "button_value" : 1},
-    "apple" : {"lable": "Sign in with Apple", "url": "/login/apple", "button_value" : 2},
-    "google" : {"lable": "Sign in with Google", "url": "/login/google", "button_value" : 4},
-    "goodreads" : {"lable": "Sign in with Goodreads Email", "url": "/login/goodreads_email", "button_value" : 3},
+    "facebook" : {"lable": "Sign in with Facebook", "url": "/login/facebook", "button_value" : 3},
+    "amazon" : {"lable": "Sign in with Amazon", "url": "/login/amazon", "button_value" : 0},
+    "apple" : {"lable": "Sign in with Apple", "url": "/login/apple", "button_value" : 1},
+    "google" : {"lable": "Sign in with Google", "url": "/login/google", "button_value" : 2},
+    "goodreads" : {"lable": "Sign in with Goodreads Email", "url": "/login/goodreads_email", "button_value" : 4},
 }
 
 
