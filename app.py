@@ -4,6 +4,8 @@ from flask import Flask
 from flask_smorest import Api
 from flask_migrate import Migrate
 from flask_cors import CORS
+from flask_login import LoginManager
+from extensions import bcrypt
 from dotenv import load_dotenv
 
 from db import db
@@ -11,11 +13,22 @@ from resources.user import blp as UserBlueprint
 from resources.auth import blp as AuthBlueprint
 from resources.book import blp as BookBlueprint
 from resources.bookshelf import blp as BookShelfBlueprint
+from models import User
 
+
+login_manager = LoginManager()
+
+@login_manager.user_loader
+def load_use(user_id):
+    return User.query.get(int(user_id))
 
 def create_app(db_url=None):
     app = Flask(__name__)
     load_dotenv()
+
+    app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
+    login_manager.init_app(app)
+    bcrypt.init_app(app)
 
     app.config["PROPAGATE_EXCEPTIONS"] = True
     app.config["API_TITLE"] = "Wrec API"

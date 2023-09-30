@@ -1,6 +1,7 @@
 from flask.views import MethodView
 from flask_smorest import Blueprint
 from flask import jsonify, redirect, url_for
+from goodreads_scrape import export_book
 import math
 
 from models import (
@@ -18,11 +19,22 @@ blp = Blueprint("bookshelf", __name__, description="Circle Packing of User's Boo
 class BookShelfView(MethodView):
 
     def get(self, user_id):
-        bookshelf_options = {
-            "circle-packing": {"url": url_for("bookshelf.CirclePackingView", user_id=user_id, _external=True)},
-            "linear-bookshelf": {"url": url_for("bookshelf.LinearBookShelfView", user_id=user_id, _external=True)},
-        }
-        return bookshelf_options
+        user = User.query.filter_by(id=user_id).first()
+
+        if user.books:
+            bookshelf_options = {
+                "circle-packing": {"url": url_for("bookshelf.CirclePackingView", user_id=user_id, _external=True)},
+                "linear-bookshelf": {"url": url_for("bookshelf.LinearBookShelfView", user_id=user_id, _external=True)},
+            }
+            return bookshelf_options
+
+        # user hasn't imported Goodreads books yet
+        elif not user.books:
+            return redirect(url_for("Auth.UserLogin"))
+            # TODO: the login to Goodreads should actually happen here. The other auth should be regular auth to wrec
+            # return back to this page (refresh essentially)
+
+
 
 
 @blp.route("linear-bookshelf/user/<int:user_id>")
@@ -216,7 +228,3 @@ def get_level_2_info(book):
     value = float(book.dewey_decimal)
     book_level_2_value = math.floor(value/10.0) * 10
     return book_level_2_value #, level_1.description
-# def get_level_3_info(book):
-#     value = float(book.dewey_decimal)
-#     book_level_1_value = math.floor(value/100.0) * 100
-#     return book_level_1_value #, level_1.description

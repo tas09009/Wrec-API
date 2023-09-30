@@ -20,19 +20,14 @@ login_options = {
 }
 
 
-@blp.route("/")
+#TODO: All of these authentication methods will need a GET method too
+@blp.route("/goodreads-login-options")
 class UserLogin(MethodView):
 
     def get(self):
         return jsonify(login_options)
 
-
-@blp.route("/logout")
-class UserLogin(MethodView):
-
-    def get(self):
-        return {"message": "You are now logged out"}
-
+# Log the user out of Goodreads?
 
 @blp.route("/facebook")
 class UserLoginFacebook(MethodView):
@@ -99,12 +94,15 @@ class UserLoginGoodReads(MethodView):
         user_id, browser = goodreads_sign_in(login_buttons, button_idx, browser, user_data)
         return finish_login(user_id, user_data, browser)
 
-def finish_login(user_id, user_data, browser): #[ ] user_id here is for goodreads, not User
+def finish_login(gr_user_id, user_data, browser): #[ ] user_id here is for goodreads, not User
     email = user_data.get("email")
     name = user_data.get("name")
     user = User.query.filter_by(email=email).first()
+    session = transfer_session(browser)
+    export_book(session, gr_user_id, user)
     if user:
-        return redirect(url_for("bookshelf.LinearBookShelfView", user_id=user.id))
+        # return redirect(url_for("bookshelf.LinearBookShelfView", user_id=user.id))
+        return redirect(url_for("users.UserView", user_id=user.id, session=session))
 
     new_user = User(
         email=email, name=name
@@ -117,6 +115,5 @@ def finish_login(user_id, user_data, browser): #[ ] user_id here is for goodread
     except SQLAlchemyError as e:
         abort(500, message=str(e))
 
-    session = transfer_session(browser)
-    export_book(session, user_id, new_user)
-    return redirect(url_for("bookshelf.LinearBookShelfView", user_id=new_user.id))
+    return redirect(url_for("users.UserView", user_id=new_user.id, session=session))
+    # return redirect(url_for("bookshelf.LinearBookShelfView", user_id=new_user.id))

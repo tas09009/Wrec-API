@@ -1,5 +1,5 @@
 """
-Export User's books
+Helper methods for resources/auth.py
 """
 
 import os
@@ -8,30 +8,37 @@ import logging
 from lxml import html
 import csv
 import time
+import unicodedata
 from io import StringIO
 from flask import abort
+import chardet
 import requests
 
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
-from models import Book
+from models import Book, User
 from db import db
-from classify_api_scrape import get_dewey_value_scrape
+from classify_api_scrape import get_dewey_value_scrape_selenium
 
-log_formatter = logging.Formatter('%(levelname)s:%(name)s:%(message)s %(extra)s')
-logging.basicConfig(filename="logfile_unimported_books.log", level=logging.INFO, format='%(levelname)s:%(name)s:%(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-logging.getLogger().setLevel(logging.INFO)
 logger = logging.getLogger('my_logger')
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler('logfile_unimported_books.log')
+formatter = logging.Formatter(
+    '[%(asctime)s] %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
-for handler in logger.handlers:
-    handler.setFormatter(log_formatter)
 
-
-EXPORT_CSV_BASE_URL = "https://www.goodreads.com/review_porter/export/"
+EXPORT_CSV_BASE_URL = "https://www.goodreads.com/review_porter/export/{gr_user_id}/goodreads_export.csv"
 
 headers = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36",
@@ -68,16 +75,12 @@ headers_export = {
 
 
 def get_login_links():
-    PAGE_TIMEOUT_SECONDS = 120000
     """
     User selected their login type (Amazon, Facebook, etc.)
     """
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    browser = webdriver.Chrome(options=chrome_options)
-
+    chrome_options = ChromeOptions()
+    chrome_options.add_argument('--headless')
+    browser = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
     browser.get("https://www.goodreads.com/user/sign_in")
     login_buttons = browser.find_elements(By.XPATH, "//button")
     return login_buttons, browser
@@ -179,6 +182,7 @@ def goodreads_sign_in(login_buttons, button_idx, browser, user_data):
 
 def get_user_id(browser):
     check_for_popups(browser)
+    # time.sleep(2)
     tree = html.fromstring(browser.page_source)
     my_books = tree.xpath('//a[contains(text(), "My Books")]')[0].get("href")
     user_id = "".join(re.findall("\d", my_books))
@@ -187,6 +191,7 @@ def get_user_id(browser):
 
 def check_for_popups(browser):
     try:
+        # Another one to add: Goodreads is taking too long
         if browser.find_element(
             By.XPATH, '//*[contains(text(), "been a while since you logged into")]'
         ):
@@ -211,7 +216,7 @@ def check_for_popups(browser):
 
 
 def transfer_session(browser):
-    # Transfer selenium.webdriver to requests.session
+    """Transfer selenium.webdriver to requests.session"""
     session = requests.Session()
     session.headers.update(headers)
     for cookie in browser.get_cookies():
@@ -221,41 +226,55 @@ def transfer_session(browser):
     return session
 
 
-def export_book(session, user_id, user):
-    exported_books_csv = session.get(EXPORT_CSV_BASE_URL + user_id)
+#TODO: better way to pass the user object around?
+def export_book(session, gr_user_id, user):
+    exported_books_csv = session.get(EXPORT_CSV_BASE_URL.format(gr_user_id=gr_user_id))
 
     # Generate a csv
-    if not exported_books_csv:
+    if exported_books_csv.status_code != requests.codes.ok: #TODO: not working
         seconds_waited = 0
         while not exported_books_csv and seconds_waited <= 15:
             data = {"format": "json"}
-            export_url = EXPORT_CSV_BASE_URL + user_id
-            session.get(
+            export_url = EXPORT_CSV_BASE_URL.format(gr_user_id=gr_user_id)
+            session.post(
                 export_url, headers=headers_export, data=data
             )  # export books button
             time.sleep(5)
             seconds_waited += 5
-            exported_books_csv = session.get(
-                EXPORT_CSV_BASE_URL + user_id + "/goodreads_export.csv",
-            )
-        if not exported_books_csv:
-            abort(500, "Error: Could not export user's books")  # return statement
+            exported_books_csv = session.get(EXPORT_CSV_BASE_URL.format(gr_user_id=gr_user_id))
+        exported_books_csv.raise_for_status()
 
-    dataFile = StringIO(exported_books_csv.text)
+
+    # Check for the encoding of the CSV content
+    result = chardet.detect(exported_books_csv.content) # exported_books_csv: Response() object
+    charset = result['encoding']
+
+    # Use the detected encoding to decode the content
+    dataFile = StringIO(exported_books_csv.content.decode(charset))
     csv_reader = csv.reader(dataFile)
     headers_csv = next(csv_reader)  # skip headers
+
     ISBN_IDX = 5
     TITLE_IDX = 1
     AUTHOR_IDX = 2
+
+    # Test with the first 5 books
+    counter = 1
     for line in csv_reader:
+        if counter == 5:
+            break
         isbn_value = line[ISBN_IDX] if line[ISBN_IDX].isdigit() else None
-        title = line[TITLE_IDX]
-        author = line[AUTHOR_IDX]
+        title_raw = line[TITLE_IDX]
+        author_raw = line[AUTHOR_IDX]
+
+        # Normalize the author name and title
+        author = unicodedata.normalize('NFD', author_raw).encode('ascii', 'ignore').decode('utf-8')
+        title = unicodedata.normalize('NFD', title_raw).encode('ascii', 'ignore').decode('utf-8')
         book = Book.query.filter_by(title=title).first()
         if book:
             user.books.append(book)
         else:
-            dewey_decimal = get_dewey_value_scrape(
+            dewey_decimal = get_dewey_value_scrape_selenium(
                 isbn=isbn_value, title=title, author=author
             )
             if dewey_decimal:
@@ -267,15 +286,21 @@ def export_book(session, user_id, user):
                 )
                 db.session.add(book)
                 user.books.append(book)
+                logger.info(
+                    'Book added, isbn="%s", title="%s", author="%s"',
+                    isbn_value, title, author
+                )
             else:
                 # [ ] log books that don't have value - with book info
                 logger.info(
-                    "Book without dewey number",
-                    extra={"isbn": isbn_value, "title": title, "author": author},
+                    'Book without dewey number, isbn="%s", title="%s", author="%s"',
+                    isbn_value, title, author
                 )
-    db.session.commit()
 
-    return {
-        "message": f"Successfully downloaded all books into a csv_file for user_id: {user_id}",
-        "redirect link": f"/bookshelf/user/<int:user_id>",
-    }
+        counter += 1
+    try:
+        db.session.commit()
+    except IntegrityError:
+        abort(400, message=f"Unable to add books for {user.email}")
+    except SQLAlchemyError as e:
+        abort(500, message=str(e))

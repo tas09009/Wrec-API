@@ -1,4 +1,15 @@
+from urllib.parse import urlencode, urlunparse
+
+import time
 import requests
+import unicodedata
+import logging
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
 
 from urllib.parse import urlencode
 from urllib.request import urlopen
@@ -6,8 +17,72 @@ import xmltodict
 
 from lxml import etree
 
+
+logger = logging.getLogger('my_logger')
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler('logfile_unimported_books.log')
+formatter = logging.Formatter(
+    '[%(asctime)s] %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+def get_dewey_value_scrape_selenium(isbn=None, title=None, author=None) -> int:
+    driver = create_driver()
+
+    base_url = 'classify.oclc.org'
+    path = '/classify2/ClassifyDemo'
+    DEWEY_VALUE_XPATH = '//table[@id="classSummaryData"]/tbody/tr/td[2]'
+    result_url = None
+
+    # Prepare the query parameters based on the provided input
+    params = {}
+    params['startRec'] = 0
+    if isbn:
+        params['search-standnum-txt'] = isbn
+    elif title and author:
+        params['search-title-txt'] = title
+        params['search-author-txt'] = author
+
+    query_string = urlencode(params)
+    full_url = urlunparse(('https', base_url + path, '', '', query_string, ''))
+    driver.get(full_url)
+    time.sleep(5)
+    try:
+        if result_link := driver.find_element(By.XPATH, '//span[@class="title"]/a'):
+            result_link.click()
+        ddc_class_number = driver.find_element(By.XPATH, DEWEY_VALUE_XPATH).text
+        try:
+            return int(float(ddc_class_number))
+        except ValueError:
+            pass
+    except NoSuchElementException:
+        logger.info(
+            'Selenium unable to search for book, isbn="%s", title="%s", author="%s"',
+            isbn, title, author
+        )
+        return 0 # placeholder value
+
+def create_driver():
+    """
+    Create driver to webscrape dewey values
+    Response using requests library: Enable JavaScript and cookies to continue"
+    """
+    #TODO: Add rotating user agents
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/17.17134"
+
+
+    chrome_options = ChromeOptions()
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument(f"user-agent={user_agent}")
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
+    return driver
+
+
 def get_dewey_value_scrape(isbn=None, title=None, author=None):
-    base_url = 'http://classify.oclc.org'
+
+    base_url = 'https://classify.oclc.org'
     path = '/classify2/ClassifyDemo'
     DEWEY_VALUE_XPATH = '//table[@id="classSummaryData"]/tbody/tr/td[2]/text()'
     result_url = None
@@ -48,7 +123,6 @@ def get_dewey_value_scrape(isbn=None, title=None, author=None):
             pass
 
     return None
-
 
 # ------------ API IS NO LONGER PUBLICLY ACCSESSIBLE --------
 def get_dewey_value_api(isbn, title, author):

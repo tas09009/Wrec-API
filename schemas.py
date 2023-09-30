@@ -1,11 +1,14 @@
 from marshmallow import Schema, fields
 
+class UserLoginSchema(Schema):
+    email = fields.Email(required=True)
+    password = fields.Str(required=True, load_only=True)
+
 
 class PlainUserSchema(Schema):
     id = fields.Int(dump_only=True)
-    name = fields.Str(required=True)
-    email = fields.Str()
-    password = fields.Str()
+    email = fields.Str(required=True)
+    password = fields.Str(load_only=True)
 
 
 class PlainBookSchema(Schema):
