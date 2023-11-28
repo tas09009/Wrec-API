@@ -1,8 +1,6 @@
 #!/bin/sh
 
-:'
-Running database migrations in production
-'
+# Running database migrations in production
 
 # Container will run migrations before app starts.
 flask db upgrade
