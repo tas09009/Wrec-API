@@ -6,4 +6,4 @@
 flask db upgrade
 
 # Start the server
-exec gunicorn --bind 0.0.0.0:80  "app:create_app()"
+exec gunicorn --bind 0.0.0.0:80 "app:create_app()" --timeout 120
