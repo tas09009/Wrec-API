@@ -75,6 +75,9 @@ def create_driver():
 
     chrome_options = ChromeOptions()
     chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage') # Overcomes limited resource problems
+    chrome_options.add_argument('--disable-blink-features=AutomationControlled')  # Disables the flag that identifies WebDriver sessions
     chrome_options.add_argument(f"user-agent={user_agent}")
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
     return driver
