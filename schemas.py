@@ -30,3 +30,6 @@ class BookSchema(PlainBookSchema):
 class UserAndBookSchema(Schema):
     title = fields.Str()
     author = fields.Str()
+
+class FileUploadResponseSchema(Schema):
+    filename = fields.Str(required=True)

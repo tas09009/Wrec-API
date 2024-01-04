@@ -9,8 +9,8 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(128), nullable=False)
     phone_number = db.Column(db.Integer, unique=True)
     name = db.Column(db.String(128))
-    books = db.relationship('Book', back_populates='users', secondary="users_books", lazy=True, cascade="all, delete")
-    # [ ] When a user is deleted, the books should not be deleted
+    books = db.relationship('Book', back_populates='users', secondary="users_books", lazy=True)
+    book_csv = db.relationship('BookCSV', backref='user', uselist=False)
 
     @classmethod
     def authenticate(cls, email, password):

@@ -13,6 +13,7 @@ from resources.user import blp as UserBlueprint
 from resources.auth import blp as AuthBlueprint
 from resources.book import blp as BookBlueprint
 from resources.bookshelf import blp as BookShelfBlueprint
+from resources.uploads import blp as ImportDataBlueprint
 from models import User
 
 
@@ -46,8 +47,9 @@ def create_app(db_url=None):
     api = Api(app)
 
     api.register_blueprint(UserBlueprint)
-    api.register_blueprint(BookBlueprint)
+    api.register_blueprint(BookBlueprint, url_prefix="/book")
     api.register_blueprint(BookShelfBlueprint, url_prefix="/bookshelf")
     api.register_blueprint(AuthBlueprint, url_prefix="/login")
+    api.register_blueprint(ImportDataBlueprint, url_prefix="/upload")
 
     return app

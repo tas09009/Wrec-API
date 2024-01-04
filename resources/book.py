@@ -11,7 +11,7 @@ from schemas import BookSchema
 blp = Blueprint("books", __name__, description="Operations on books")
 
 
-@blp.route("/book")
+@blp.route("/")
 class BookView(MethodView):
 
     @blp.response(200, BookSchema(many=True))
@@ -31,7 +31,7 @@ class BookView(MethodView):
             abort(500, message="An error occured while inserting the book")
         return book
 
-@blp.route("/book/<int:book_id>")
+@blp.route("/<int:book_id>")
 class BookView(MethodView):
 
     @blp.response(200, BookSchema)
