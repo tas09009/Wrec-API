@@ -27,6 +27,14 @@ def create_app(db_url=None):
     app = Flask(__name__)
     load_dotenv()
 
+    flask_env = os.getenv('FLASK_ENV', 'development')
+    if flask_env == 'production':
+        app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL_PROD", "default_prod_db_url")
+    elif flask_env == 'testing':
+        app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL_TEST", "default_test_db_url")
+    else:
+        app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL_DEV", "default_dev_db_url")
+
     app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
     login_manager.init_app(app)
     bcrypt.init_app(app)
@@ -38,7 +46,6 @@ def create_app(db_url=None):
     app.config["OPENAPI_URL_PREFIX"] = "/"
     app.config["OPENAPI_SWAGGER_UI_PATH"] = "/swagger-ui"
     app.config["OPENAPI_SWAGGER_UI_URL"] = "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
-    app.config["SQLALCHEMY_DATABASE_URI"] = db_url or os.getenv("DATABASE_URL", "sqlite:///data.db")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     CORS(app)
 

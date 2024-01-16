@@ -1,0 +1,27 @@
+org: tas09009
+app: aws-wrec-lambda
+service: aws-wrec-lambda
+
+frameworkVersion: '3'
+
+plugins:
+  - serverless-dotenv-plugin
+
+provider:
+  name: aws
+  runtime: python3.9
+  profile: serverless-admin
+  region: us-east-1
+
+custom:
+  dotenv:
+      path: ../.env
+  dev: ${.env:DATABASE_URL_DEV}
+  prod: ${.env:DATABASE_URL_PROD}
+  testing: ${.env:DATABASE_URL_TEST}
+
+functions:
+  hello:
+    handler: handler.lambda_handler
+    environment:
+      DATABASE_URL: ${self:custom.${opt:stage, self:provider.stage}}
