@@ -8,6 +8,7 @@ from lambda_functions.process_csv.lambda_function import process_book_data, pars
 @pytest.fixture
 def test_engine():
     test_db_url = os.getenv('DATABASE_URL_TEST')
+    print(f"test DB url: {test_db_url}")
     if not test_db_url:
         raise RuntimeError("DATABASE_URL_TEST environment variable not set")
 

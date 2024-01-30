@@ -46,7 +46,7 @@ class CSVUploadView(MethodView):
 
         upload_success =  upload_file_to_s3(file, 'wrec-upload-book-csv', f'user-csv/{user_id}/{filename}')
         if upload_success:
-            book_csv = BookCSV(filename=filename, user_id=user_id, s3_url=f's3://your-s3-bucket-name/user-csv/{user_id}/{filename}')
+            book_csv = BookCSV(filename=filename, user_id=user_id, s3_url=f's3://wrec-upload-book-csv/user-csv/{user_id}/{filename}')
             db.session.add(book_csv)
             db.session.commit()
             response_data = {'message': f'File uploaded successfully for user {user_id}.',

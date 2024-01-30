@@ -9,19 +9,33 @@ plugins:
 
 provider:
   name: aws
-  runtime: python3.9
   profile: serverless-admin
   region: us-east-1
+  ecr:
+    images:
+      myLambdaFunction:
+        path: ./
 
 custom:
   dotenv:
-      path: ../.env
-  dev: ${.env:DATABASE_URL_DEV}
-  prod: ${.env:DATABASE_URL_PROD}
-  testing: ${.env:DATABASE_URL_TEST}
+    path: ../.env
+
+  # Database URLs for different states
+  dev:
+    DATABASE_URL: postgresql+psycopg2://wnsqfvbk:GHl5Sq3gPJQHDgjwbMou4ZO6f7AE-oe0@mahmud.db.elephantsql.com/wnsqfvbk
+  prod:
+    DATABASE_URL: postgresql://tzmyhyab:VcSEcoqgi7hWdtUnUKqta9B2oVYSVc6f@mahmud.db.elephantsql.com/tzmyhyab
+  test:
+    DATABASE_URL: postgresql+psycopg2://seupapiy:4Ki4A2gKXs70TMb8xq_fXrJq8aJGmfGz@batyr.db.elephantsql.com/seupapiy
 
 functions:
-  hello:
-    handler: handler.lambda_handler
+  processCsv:
+    image:
+      name: myLambdaFunction
     environment:
-      DATABASE_URL: ${self:custom.${opt:stage, self:provider.stage}}
+      DATABASE_URL: ${self:custom.${opt:stage, 'dev'}.DATABASE_URL}
+    events:
+      - s3:
+          bucket: wrec-upload-book-csv
+          event: s3:ObjectCreated:*
+          existing: true

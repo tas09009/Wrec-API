@@ -1,0 +1,4 @@
+boto3
+chardet
+sqlalchemy
+psycopg2-binary

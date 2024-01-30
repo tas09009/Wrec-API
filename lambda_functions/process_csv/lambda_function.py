@@ -86,4 +86,5 @@ def process_book_data(book_data, connection):
                 VALUES (:isbn, :title, :author)
             """)
             connection.execute(insert_stmt, {'isbn': book['isbn'], 'title': book['title'], 'author': book['author']})
+            connection.commit()
             print(f"Added book: {book['title']} | {book['author']} | {book['isbn']}")
