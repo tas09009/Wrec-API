@@ -6,14 +6,11 @@ frameworkVersion: '3'
 
 plugins:
   - serverless-dotenv-plugin
+  - serverless-python-requirements
 provider:
   name: aws
   profile: serverless-admin
   region: us-east-1
-  ecr:
-    images:
-      myLambdaFunction:
-        path: ./
 
 custom:
   dotenv:
@@ -29,8 +26,7 @@ custom:
 
 functions:
   processCsv:
-    image:
-      name: myLambdaFunction
+    handler: handler.function
     environment:
       DATABASE_URL: ${self:custom.${opt:stage, 'dev'}.DATABASE_URL}
     events:

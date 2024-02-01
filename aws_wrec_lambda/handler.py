@@ -35,6 +35,8 @@ def get_db_connection():
 
 def lambda_handler(event, context):
 
+    # bucket_name = "wrec-upload-book-csv"
+    # file_key = "user-csv/1/goodreads_library_export_sample.csv" #TODO: remove hardcoded path
     bucket_name = event['Records'][0]['s3']['bucket']['name']
     file_key = event['Records'][0]['s3']['object']['key']
 

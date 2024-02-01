@@ -1,7 +1,7 @@
 import os
 import pytest
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from aws_wrec_lambda.handler import lambda_handler
 import boto3
 
@@ -43,6 +43,12 @@ def test_lambda_handler_integration(test_db_engine):
 
     # Your test assertions go here
     assert response['statusCode'] == 200
-    # Additional assertions to check data in the test database
 
-    # Perform any cleanup if necessary
+    # Query the database to check if the data was inserted/updated correctly
+    with test_db_engine.connect() as connection:
+        query = text("SELECT * FROM books WHERE title=:title")
+        result = connection.execute(query, {'title': 'Kafka on the Shore'})
+        books = result.fetchall()
+        # Add assertions based on what you expect to find in the database
+        print(f'books: {books}')
+        assert len(books) > 0  # Example assertion

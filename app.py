@@ -27,14 +27,18 @@ def create_app(db_url=None):
     app = Flask(__name__)
     load_dotenv()
 
-    flask_env = os.getenv('FLASK_ENV', 'development')
+    flask_env = os.getenv("FLASK_ENV", "development")
     if flask_env == 'production':
-        app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL_PROD", "default_prod_db_url")
+        database_url = os.getenv("DATABASE_URL_PROD")
     elif flask_env == 'testing':
-        app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL_TEST", "default_test_db_url")
+        database_url = os.getenv("DATABASE_URL_TEST")
     else:
-        app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL_DEV", "default_dev_db_url")
+        database_url = os.getenv("DATABASE_URL_DEV")
 
+    if not database_url:
+        raise ValueError("Database URL is not set.")
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
     app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
     login_manager.init_app(app)
     bcrypt.init_app(app)
