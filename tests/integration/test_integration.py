@@ -2,7 +2,7 @@ import os
 import pytest
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
-from lambda_functions.process_csv.lambda_function import lambda_handler
+from aws_wrec_lambda.handler import lambda_handler
 import boto3
 
 # Load .env.test for testing

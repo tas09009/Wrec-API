@@ -3,7 +3,7 @@ import pytest
 import os
 from moto import mock_s3
 from sqlalchemy import create_engine
-from lambda_functions.process_csv.lambda_function import lambda_handler
+from aws_wrec_lambda.handler import lambda_handler
 
 """Uses mock data - which is why it's considered a unit test, not an integration test"""
 

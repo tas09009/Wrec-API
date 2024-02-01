@@ -2,7 +2,7 @@ import os
 from typing import Dict, List
 import pytest
 from sqlalchemy import create_engine, text
-from lambda_functions.process_csv.lambda_function import process_book_data, parse_csv_data
+from aws_wrec_lambda.handler import process_book_data, parse_csv_data
 
 
 @pytest.fixture

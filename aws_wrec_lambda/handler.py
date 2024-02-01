@@ -10,12 +10,9 @@ from io import StringIO
 
 s3_client = boto3.client('s3')
 
-# db_url = os.getenv('DATABASE_URL')
-# if not db_url:
-#     raise ValueError("DATABASE_URL environment variable not set")
-
-db_url="postgresql+psycopg2://seupapiy:4Ki4A2gKXs70TMb8xq_fXrJq8aJGmfGz@batyr.db.elephantsql.com/seupapiy"
-# db_url="postgres://seupapiy:4Ki4A2gKXs70TMb8xq_fXrJq8aJGmfGz@batyr.db.elephantsql.com/seupapiy"
+db_url = os.getenv('DATABASE_URL_TEST')
+if not db_url:
+    raise ValueError("DATABASE_URL environment variable not set")
 
 def test_handler():
     # Use the detected encoding to decode the content
@@ -38,8 +35,6 @@ def get_db_connection():
 
 def lambda_handler(event, context):
 
-    # bucket_name = "wrec-upload-book-csv"
-    # file_key = "user-csv/1/goodreads_library_export_sample.csv" #TODO: remove hardcoded path
     bucket_name = event['Records'][0]['s3']['bucket']['name']
     file_key = event['Records'][0]['s3']['object']['key']
 
@@ -54,7 +49,6 @@ def lambda_handler(event, context):
     dataFile = StringIO(file_content.decode(charset))
     csv_reader = csv.reader(dataFile)
     book_data = parse_csv_data(csv_reader)
-    book_data = parse_csv_data()
     with get_db_connection() as connection:
         process_book_data(book_data, connection)
 
@@ -105,11 +99,4 @@ def process_book_data(book_data, connection):
             """)
             connection.execute(insert_stmt, {'isbn': book['isbn'], 'title': book['title'], 'author': book['author']})
             connection.commit()
-            # print(f"insert_data: {insert_data}")
             print(f"Added book: {book['title']} | {book['author']} | {book['isbn']}")
-
-
-if __name__ == "__main__":
-    status = test_handler()
-    print("Test Lambda handler running")
-    print(status)

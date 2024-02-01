@@ -1,5 +1,5 @@
 import pytest
-from lambda_functions.process_csv.lambda_function import parse_csv_data
+from aws_wrec_lambda.handler import parse_csv_data
 
 def test_parse_csv_data(sample_csv_data):
     parsed_data = parse_csv_data(sample_csv_data)

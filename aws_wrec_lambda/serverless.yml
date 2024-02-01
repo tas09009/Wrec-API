@@ -1,12 +1,11 @@
 org: tas09009
-app: aws-wrec-lambda
-service: aws-wrec-lambda
+app: aws_wrec_lambda
+service: aws_wrec_lambda
 
 frameworkVersion: '3'
 
 plugins:
   - serverless-dotenv-plugin
-
 provider:
   name: aws
   profile: serverless-admin
