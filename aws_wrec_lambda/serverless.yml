@@ -1,6 +1,6 @@
 org: tas09009
-app: aws_wrec_lambda
-service: aws_wrec_lambda
+app: aws-wrec-lambda
+service: aws-wrec-lambda
 
 frameworkVersion: '3'
 
@@ -12,9 +12,21 @@ provider:
   profile: serverless-admin
   region: us-east-1
 
+    # NOTE: In case we need to create a new one
+    # iam:
+      # name: wrec-lambda-s3-csv
+      # iamRoleStatements:
+      #   - Effect: 'Allow'
+      #     Resource: 'arn:aws:s3:::wrec-upload-book-csv/*'
+      #     Action:
+      #       - 's3:GetObject'
+
 custom:
   dotenv:
     path: ../.env
+  pythonRequirements:
+    dockerizePip: true
+
 
   # Database URLs for different states
   dev:
@@ -24,9 +36,11 @@ custom:
   test:
     DATABASE_URL: postgresql+psycopg2://seupapiy:4Ki4A2gKXs70TMb8xq_fXrJq8aJGmfGz@batyr.db.elephantsql.com/seupapiy
 
+
 functions:
   processCsv:
-    handler: handler.function
+    handler: handler.lambda_handler
+    role: arn:aws:iam::831261256492:role/wrec-lambda-MyLambdaFunctionRole-zZbeLUcCxezm
     environment:
       DATABASE_URL: ${self:custom.${opt:stage, 'dev'}.DATABASE_URL}
     events:

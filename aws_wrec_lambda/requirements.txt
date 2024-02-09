@@ -1,4 +1,4 @@
 boto3
 chardet
 sqlalchemy
-psycopg2-binary
+# psycopg2-binary

@@ -1,0 +1,32 @@
+org: tas09009
+app: process-books
+service: wrec-lambda
+
+frameworkVersion: '3'
+
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: true
+    # requirements.txt caching issue when removing boto3
+    # useDownloadCache: false
+
+provider:
+  name: aws
+  runtime: python3.9
+
+functions:
+  processCsv:
+    handler: handler.hello
+    role: arn:aws:iam::831261256492:role/wrec-lambda-dev-IamRoleCustomResourcesLambdaExecuti-t9OkPM5Nqia3 # S3 permissions
+    # environment:
+    #   DATABASE_URL: ${self:custom.${opt:stage, 'dev'}.DATABASE_URL}
+    events:
+      - s3:
+          bucket: wrec-upload-book-csv
+          event: s3:ObjectCreated:*
+          existing: true
+
