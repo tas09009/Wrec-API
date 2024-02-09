@@ -11,6 +11,8 @@ plugins:
 custom:
   pythonRequirements:
     dockerizePip: true
+  dotenv:
+    path: ../.env
     # requirements.txt caching issue when removing boto3
     # useDownloadCache: false
 
@@ -20,10 +22,12 @@ provider:
 
 functions:
   processCsv:
-    handler: handler.hello
+    handler: handler.handler
     role: arn:aws:iam::831261256492:role/wrec-lambda-dev-IamRoleCustomResourcesLambdaExecuti-t9OkPM5Nqia3 # S3 permissions
-    # environment:
-    #   DATABASE_URL: ${self:custom.${opt:stage, 'dev'}.DATABASE_URL}
+    environment:
+      DATABASE_URL: "postgresql+psycopg2://seupapiy:4Ki4A2gKXs70TMb8xq_fXrJq8aJGmfGz@batyr.db.elephantsql.com/seupapiy"
+      # DATABASE_URL: ${env:DATABASE_URL} # References 'test' db
+
     events:
       - s3:
           bucket: wrec-upload-book-csv
